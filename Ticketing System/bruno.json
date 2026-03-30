@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "Ticketing System",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
