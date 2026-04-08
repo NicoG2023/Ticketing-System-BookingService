@@ -1,15 +1,16 @@
-CREATE TABLE venue(
+CREATE TABLE sede(
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    address VARCHAR(255) NOT NULL,
-    total_capacity BIGINT NOT NULL
+    nombre VARCHAR(255) NOT NULL,
+    direccion VARCHAR(255),
+    capacidad_total BIGINT NOT NULL
 );
 
-CREATE TABLE event(
+CREATE TABLE evento(
     id BIGINT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
-    venue_id BIGINT NOT NULL,
-    total_capacity BIGINT NOT NULL,
-    left_capacity BIGINT NOT NULL,
-    CONSTRAINT fk_event_venue FOREIGN KEY (venue_id) REFERENCES venue(id) ON DELETE CASCADE
+    nombre VARCHAR(255) NOT NULL,
+    sede_id BIGINT NOT NULL,
+    capacidad_total BIGINT NOT NULL,
+    capacidad_restante BIGINT NOT NULL,
+    CONSTRAINT fk_evento_sede
+        FOREIGN KEY (sede_id) REFERENCES sede(id) ON DELETE CASCADE
 );

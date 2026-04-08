@@ -12,26 +12,26 @@ import lombok.Setter;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@Table(name = "event")
+@Table(name = "evento")
 public class Event {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "name")
+    @Column(name = "nombre")
     private String name;
 
-    @Column(name = "total_capacity")
+    @Column(name = "capacidad_total")
     private Long totalCapacity;
 
-    @Column(name = "left_capacity")
+    @Column(name = "capacidad_restante")
     private Long leftCapacity;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "venue_id", nullable = false)
+    @JoinColumn(name = "sede_id", nullable = false)
     private Venue venue;
 
-    @Column(name = "ticket_price")
+    @Column(name = "precio_ticket")
     private BigDecimal ticketPrice;
 }
