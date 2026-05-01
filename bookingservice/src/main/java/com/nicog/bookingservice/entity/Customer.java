@@ -15,16 +15,19 @@ import lombok.*;
 @Builder
 @Getter
 @Setter
-@Table(name = "customer")
+@Table(name = "cliente")
 public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false)
+    @Column(nullable = false, name = "nombre")
     private String name;
 
+    @Column(name = "email")
     private String email;
+
+    @Column(name = "direccion")
     private String address;
 }

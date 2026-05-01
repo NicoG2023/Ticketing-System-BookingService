@@ -19,26 +19,26 @@ import org.hibernate.annotations.CreationTimestamp;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Table(name = "`order`")
+@Table(name = "orden")
 public class Order {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "total")
+    @Column(name = "precio_total")
     private BigDecimal totalPrice;
 
-    @Column(name = "quantity")
+    @Column(name = "recuento_tickets")
     private Long ticketCount;
 
     @CreationTimestamp
     @Column(name = "placed_at", updatable = false, nullable = false)
     private LocalDateTime placedAt;
 
-    @Column(name = "customer_id")
+    @Column(name = "id_cliente")
     private Long customerId;
 
-    @Column(name = "event_id")
+    @Column(name = "id_evento")
     private Long eventId;
 }
