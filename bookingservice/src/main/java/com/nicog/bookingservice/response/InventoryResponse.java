@@ -15,6 +15,6 @@ public class InventoryResponse {
     private Long eventId;
     private String event;
     private Long capacity;
-    private VenueResponse venue;
+    private String venue;
     private BigDecimal ticketPrice;
 }

@@ -1,0 +1,83 @@
+.simulations-page {
+    padding: 2rem;
+}
+
+.simulations-description {
+    max-width: 720px;
+    color: #4b5563;
+}
+
+.simulation-card {
+    margin-top: 1.5rem;
+    padding: 1.5rem;
+    border: 1px solid #e5e7eb;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.simulation-form {
+    display: flex;
+    gap: 0.75rem;
+    align-items: end;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.simulation-form input {
+    padding: 0.6rem;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+}
+
+.simulation-form button {
+    padding: 0.7rem 1rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.simulation-result {
+    margin-top: 1.5rem;
+}
+
+.simulation-result table {
+    border-collapse: collapse;
+    width: 100%;
+    margin-top: 0.75rem;
+}
+
+.simulation-result td {
+    border: 1px solid #e5e7eb;
+    padding: 0.75rem;
+}
+
+.simulation-result td:first-child {
+    font-weight: 600;
+    width: 220px;
+}
+
+.simulation-conclusion {
+    margin-top: 1rem;
+    padding: 1rem;
+    border-radius: 12px;
+    background: #eff6ff;
+    color: #1e3a8a;
+}
+
+.alert {
+    margin: 1rem 0;
+    padding: 1rem;
+    border-radius: 12px;
+}
+
+.alert-error {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.alert-warning {
+    background: #fef3c7;
+    color: #92400e;
+}

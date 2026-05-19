@@ -21,14 +21,49 @@ public class InventoryServiceRoutes {
     @Bean
     public RouterFunction<ServerResponse> inventoryRoutes() {
         return GatewayRouterFunctions.route("inventory-service")
+
+            // Liberar inventario / compensación
+            .route(
+                RequestPredicates.path(
+                    "/api/v1/inventory/event/{eventId}/capacity/release/{ticketsReleased}"
+                ),
+                HandlerFunctions.http()
+            )
+
+            // Descontar inventario
+            .route(
+                RequestPredicates.path(
+                    "/api/v1/inventory/event/{eventId}/capacity/{capacity}"
+                ),
+                HandlerFunctions.http()
+            )
+
+            // Consultar sede
             .route(
                 RequestPredicates.path("/api/v1/inventory/venue/{venueId}"),
                 HandlerFunctions.http()
             )
+
+            // Consultar evento específico
             .route(
                 RequestPredicates.path("/api/v1/inventory/event/{eventId}"),
                 HandlerFunctions.http()
             )
+
+            // Consultar todos los eventos
+            .route(
+                RequestPredicates.path("/api/v1/inventory/events"),
+                HandlerFunctions.http()
+            )
+
+            // Simular reserva concurrente para simulacion de Lost Update
+            .route(
+                RequestPredicates.path(
+                    "/api/v1/inventory/event/{eventId}/simulate-concurrent-booking"
+                ),
+                HandlerFunctions.http()
+            )
+
             .before(uri(URI.create(inventoryServiceUrl)))
             .build();
     }

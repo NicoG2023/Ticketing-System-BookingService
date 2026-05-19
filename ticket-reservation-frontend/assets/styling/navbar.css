@@ -1,0 +1,143 @@
+#navbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+
+    width: 100%;
+    min-height: 64px;
+    padding: 0 32px;
+
+    background-color: #111827;
+    border-bottom: 1px solid #1f2937;
+
+    box-sizing: border-box;
+}
+
+#navbar a {
+    color: #e5e7eb;
+    text-decoration: none;
+    font-size: 15px;
+    font-weight: 500;
+
+    padding: 8px 10px;
+    border-radius: 8px;
+
+    transition:
+        color 0.2s ease,
+        background-color 0.2s ease;
+}
+
+#navbar a:hover {
+    cursor: pointer;
+    color: #ffffff;
+    background-color: #1f2937;
+}
+
+#auth-actions {
+    margin-left: auto;
+
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+#auth-actions span {
+    color: #e5e7eb;
+    font-size: 14px;
+}
+
+#auth-actions .error {
+    color: #fca5a5;
+    background-color: rgba(239, 68, 68, 0.12);
+
+    padding: 6px 10px;
+    border-radius: 8px;
+
+    font-size: 13px;
+}
+
+#auth-actions button {
+    border: none;
+    outline: none;
+
+    padding: 9px 16px;
+    border-radius: 10px;
+
+    background-color: #2563eb;
+    color: #ffffff;
+
+    font-size: 14px;
+    font-weight: 600;
+
+    cursor: pointer;
+
+    transition:
+        background-color 0.2s ease,
+        transform 0.1s ease,
+        box-shadow 0.2s ease;
+}
+
+#auth-actions button:hover {
+    background-color: #1d4ed8;
+    box-shadow: 0 6px 16px rgba(37, 99, 235, 0.3);
+}
+
+#auth-actions button:active {
+    transform: scale(0.97);
+}
+
+.auth-menu-container {
+    position: relative;
+}
+
+.user-menu-button {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.chevron {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.auth-dropdown {
+    position: absolute;
+    top: 44px;
+    right: 0;
+
+    min-width: 180px;
+    padding: 8px;
+
+    background-color: #111827;
+    border: 1px solid #374151;
+    border-radius: 12px;
+
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+
+    z-index: 1000;
+}
+
+.auth-dropdown .dropdown-item {
+    width: 100%;
+
+    display: block;
+
+    padding: 10px 12px;
+
+    background-color: transparent;
+    color: #e5e7eb;
+
+    border: none;
+    border-radius: 8px;
+
+    text-align: left;
+    font-size: 14px;
+    font-weight: 500;
+
+    cursor: pointer;
+}
+
+.auth-dropdown .dropdown-item:hover {
+    background-color: #1f2937;
+}

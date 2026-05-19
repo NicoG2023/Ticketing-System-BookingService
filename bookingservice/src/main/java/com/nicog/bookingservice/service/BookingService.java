@@ -3,7 +3,7 @@ package com.nicog.bookingservice.service;
 import com.nicog.bookingservice.client.InventoryServiceClient;
 import com.nicog.bookingservice.entity.Customer;
 import com.nicog.bookingservice.event.BookingEvent;
-import com.nicog.bookingservice.repository.CustomerRepository;
+import com.nicog.bookingservice.repository.FirebaseCustomerRepository;
 import com.nicog.bookingservice.request.BookingRequest;
 import com.nicog.bookingservice.response.BookingResponse;
 import com.nicog.bookingservice.response.InventoryResponse;
@@ -16,12 +16,12 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class BookingService {
 
-    private final CustomerRepository customerRepository;
+    private final FirebaseCustomerRepository customerRepository;
     private final InventoryServiceClient inventoryServiceClient;
     private final KafkaTemplate<String, BookingEvent> kafkaTemplate;
 
     public BookingService(
-        final CustomerRepository customerRepository,
+        final FirebaseCustomerRepository customerRepository,
         final InventoryServiceClient inventoryServiceClient,
         final KafkaTemplate<String, BookingEvent> kafkaTemplate
     ) {
@@ -31,30 +31,44 @@ public class BookingService {
     }
 
     public BookingResponse createBooking(final BookingRequest request) {
-        // check if user exists
+        validateBookingRequest(request);
+
         final Customer customer = customerRepository
             .findById(request.getUserId())
-            .orElse(null);
-        if (customer == null) {
-            throw new RuntimeException("User not found");
-        }
-        // check if there is enough inventory
+            .join();
+
+        log.info("Customer found: {}", customer);
+
         final InventoryResponse inventoryResponse =
             inventoryServiceClient.getInventory(request.getEventId());
+
+        if (inventoryResponse == null) {
+            throw new RuntimeException(
+                "No fue posible consultar el inventario del evento"
+            );
+        }
+
         log.info("Inventory Response: {}", inventoryResponse);
+
+        if (inventoryResponse.getCapacity() == null) {
+            throw new RuntimeException(
+                "El inventario del evento no tiene capacidad registrada"
+            );
+        }
+
         if (inventoryResponse.getCapacity() < request.getTicketCount()) {
             throw new RuntimeException("Not enough inventory");
         }
-        // -- get event information to also get Venue information
-        // create booking
+
         final BookingEvent bookingEvent = createBookingEvent(
             request,
-            customer,
             inventoryResponse
         );
-        // send booking to Order Service on a Kafka Topic
+
         kafkaTemplate.send("booking", bookingEvent);
+
         log.info("Booking sent to Kafka: {}", bookingEvent);
+
         return BookingResponse.builder()
             .userId(bookingEvent.getUserId())
             .eventId(bookingEvent.getEventId())
@@ -65,7 +79,6 @@ public class BookingService {
 
     private BookingEvent createBookingEvent(
         final BookingRequest request,
-        final Customer customer,
         final InventoryResponse inventoryResponse
     ) {
         return BookingEvent.builder()
@@ -78,5 +91,31 @@ public class BookingService {
                     .multiply(BigDecimal.valueOf(request.getTicketCount()))
             )
             .build();
+    }
+
+    private void validateBookingRequest(final BookingRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException(
+                "La solicitud de reserva no puede ser nula"
+            );
+        }
+
+        if (request.getUserId() == null) {
+            throw new IllegalArgumentException(
+                "El id del cliente es obligatorio"
+            );
+        }
+
+        if (request.getEventId() == null) {
+            throw new IllegalArgumentException(
+                "El id del evento es obligatorio"
+            );
+        }
+
+        if (request.getTicketCount() == null || request.getTicketCount() <= 0) {
+            throw new IllegalArgumentException(
+                "La cantidad de tickets debe ser mayor a cero"
+            );
+        }
     }
 }
