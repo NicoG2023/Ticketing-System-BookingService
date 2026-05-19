@@ -148,22 +148,17 @@ fn EventCard(
                         spawn(async move {
                             booking_loading.set(true);
 
-                            let Some(user_id_text) = user_id_text else {
+                            let Some(user_id) = user_id_text else {
                                 on_error.call("No se encontró el usuario autenticado.".to_string());
                                 booking_loading.set(false);
                                 return;
                             };
 
-                            let user_id = match user_id_text.parse::<u64>() {
-                                Ok(value) => value,
-                                Err(_) => {
-                                    on_error.call(
-                                        "El user_id de Keycloak no es numérico. Para esta demo necesitas mapearlo a un customerId de Firebase.".to_string()
-                                    );
-                                    booking_loading.set(false);
-                                    return;
-                                }
-                            };
+                            if user_id.trim().is_empty() {
+                                on_error.call("El id del usuario autenticado está vacío.".to_string());
+                                booking_loading.set(false);
+                                return;
+                            }
 
                             let ticket_count = match tickets_text.parse::<u64>() {
                                 Ok(value) if value > 0 => value,

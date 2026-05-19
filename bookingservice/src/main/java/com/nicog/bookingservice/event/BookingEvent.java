@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @Builder
 public class BookingEvent {
 
-    private Long userId;
+    private String userId;
     private Long eventId;
     private Long ticketCount;
     private BigDecimal totalPrice;

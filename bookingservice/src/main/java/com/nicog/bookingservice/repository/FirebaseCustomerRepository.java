@@ -19,7 +19,7 @@ public class FirebaseCustomerRepository {
         this.customersRef = database.getReference("customers");
     }
 
-    public CompletableFuture<Customer> findById(Long customerId) {
+    public CompletableFuture<Customer> findById(String customerId) {
         CompletableFuture<Customer> future = new CompletableFuture<>();
 
         customersRef

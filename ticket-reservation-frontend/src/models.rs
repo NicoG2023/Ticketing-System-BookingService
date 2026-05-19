@@ -21,7 +21,7 @@ pub struct VenueInventoryResponse {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BookingRequest {
-    pub user_id: u64,
+    pub user_id: String,
     pub event_id: u64,
     pub ticket_count: u64,
 }
@@ -29,7 +29,7 @@ pub struct BookingRequest {
 #[derive(Debug, Clone, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct BookingResponse {
-    pub user_id: u64,
+    pub user_id: String,
     pub event_id: u64,
     pub ticket_count: u64,
     pub total_price: f64,

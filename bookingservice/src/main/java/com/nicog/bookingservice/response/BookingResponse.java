@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class BookingResponse {
 
-    private Long userId;
+    private String userId;
     private Long eventId;
     private Long ticketCount;
     private BigDecimal totalPrice;

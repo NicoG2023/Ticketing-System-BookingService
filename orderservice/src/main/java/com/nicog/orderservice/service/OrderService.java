@@ -83,7 +83,10 @@ public class OrderService {
             );
         }
 
-        if (bookingEvent.getUserId() == null) {
+        if (
+            bookingEvent.getUserId() == null ||
+            bookingEvent.getUserId().isBlank()
+        ) {
             throw new IllegalArgumentException(
                 "El id del cliente es obligatorio"
             );

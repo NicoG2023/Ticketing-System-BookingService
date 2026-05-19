@@ -6,7 +6,7 @@ mod components;
 mod models;
 mod views;
 
-use views::{Blog, Events, Home, Navbar, Simulations};
+use views::{Blog, Events, Home, Inventory, Navbar, Simulations};
 
 #[derive(Clone)]
 pub struct AuthState {
@@ -47,6 +47,9 @@ pub enum Route {
 
         #[route("/simulations")]
         Simulations {},
+
+        #[route("/inventory")]
+        Inventory {},
 }
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");

@@ -100,7 +100,7 @@ public class BookingService {
             );
         }
 
-        if (request.getUserId() == null) {
+        if (request.getUserId() == null || request.getUserId().isBlank()) {
             throw new IllegalArgumentException(
                 "El id del cliente es obligatorio"
             );

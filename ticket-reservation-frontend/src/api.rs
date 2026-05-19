@@ -6,7 +6,7 @@ use crate::models::{
     VenueInventoryResponse,
 };
 
-const API_BASE: &str = "/api/v1";
+const API_BASE: &str = "http://localhost:8091/api/v1";
 
 async fn bearer_token() -> Result<String, String> {
     let token = auth::get_token()
@@ -116,4 +116,40 @@ pub async fn simulate_concurrent_booking(
         .json::<ConcurrentBookingSimulationResponse>()
         .await
         .map_err(|error| format!("Error leyendo la simulación: {error}"))
+}
+
+pub async fn decrease_event_capacity(event_id: u64, capacity: u64) -> Result<(), String> {
+    let token = bearer_token().await?;
+
+    let response = Request::put(&format!(
+        "{API_BASE}/inventory/event/{event_id}/capacity/{capacity}"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error descontando inventario: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    Ok(())
+}
+
+pub async fn release_event_capacity(event_id: u64, tickets_released: u64) -> Result<(), String> {
+    let token = bearer_token().await?;
+
+    let response = Request::put(&format!(
+        "{API_BASE}/inventory/event/{event_id}/capacity/release/{tickets_released}"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error liberando inventario: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    Ok(())
 }

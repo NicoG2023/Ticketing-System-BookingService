@@ -17,7 +17,7 @@ public class Order {
     private BigDecimal totalPrice;
     private Long ticketCount;
     private LocalDateTime placedAt;
-    private Long customerId;
+    private String customerId;
     private Long eventId;
     private String status;
 }
