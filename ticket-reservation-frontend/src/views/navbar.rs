@@ -5,6 +5,8 @@ const NAVBAR_CSS: Asset = asset!("/assets/styling/navbar.css");
 
 #[component]
 pub fn Navbar() -> Element {
+    let mut auth_state = use_context::<AuthState>();
+
     rsx! {
         document::Link { rel: "stylesheet", href: NAVBAR_CSS }
 
@@ -22,8 +24,8 @@ pub fn Navbar() -> Element {
             }
 
             Link {
-                to: Route::Blog { id: 1 },
-                "Blog"
+                to: Route::Inventory {},
+                "Inventario"
             }
 
             Link {
@@ -31,7 +33,30 @@ pub fn Navbar() -> Element {
                 "Simulaciones BD"
             }
 
+            Link {
+                to: Route::Venue {},
+                "Sedes"
+            }
+
             AuthActions {}
+        }
+
+        if let Some(message) = (auth_state.notice)() {
+            div {
+                class: "auth-notice",
+
+                span {
+                    "{message}"
+                }
+
+                button {
+                    class: "auth-notice-close",
+                    onclick: move |_| {
+                        auth_state.notice.set(None);
+                    },
+                    "Cerrar"
+                }
+            }
         }
 
         Outlet::<Route> {}

@@ -2,8 +2,8 @@ use gloo_net::http::Request;
 
 use crate::auth;
 use crate::models::{
-    BookingRequest, BookingResponse, ConcurrentBookingSimulationResponse, EventInventoryResponse,
-    VenueInventoryResponse,
+    BookingRequest, BookingResponse, ConcurrentBookingSimulationResponse, CreateEventRequest,
+    CreateVenueRequest, EventInventoryResponse, VenueInventoryResponse,
 };
 
 const API_BASE: &str = "http://localhost:8091/api/v1";
@@ -152,4 +152,67 @@ pub async fn release_event_capacity(event_id: u64, tickets_released: u64) -> Res
     }
 
     Ok(())
+}
+
+pub async fn create_event(request: CreateEventRequest) -> Result<EventInventoryResponse, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::post(&format!("{API_BASE}/inventory/events"))
+        .header("Authorization", &token)
+        .header("Content-Type", "application/json")
+        .json(&request)
+        .map_err(|error| format!("Error preparando el evento: {error}"))?
+        .send()
+        .await
+        .map_err(|error| format!("Error creando el evento: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<EventInventoryResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo el evento creado: {error}"))
+}
+
+pub async fn get_venues() -> Result<Vec<VenueInventoryResponse>, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::get(&format!("{API_BASE}/inventory/venues"))
+        .header("Authorization", &token)
+        .send()
+        .await
+        .map_err(|error| format!("Error llamando al backend: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<Vec<VenueInventoryResponse>>()
+        .await
+        .map_err(|error| format!("Error leyendo la lista de sedes: {error}"))
+}
+
+pub async fn create_venue(request: CreateVenueRequest) -> Result<VenueInventoryResponse, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::post(&format!("{API_BASE}/inventory/venues"))
+        .header("Authorization", &token)
+        .header("Content-Type", "application/json")
+        .json(&request)
+        .map_err(|error| format!("Error preparando la sede: {error}"))?
+        .send()
+        .await
+        .map_err(|error| format!("Error creando la sede: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<VenueInventoryResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la sede creada: {error}"))
 }

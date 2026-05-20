@@ -38,6 +38,12 @@ public class InventoryServiceRoutes {
                 HandlerFunctions.http()
             )
 
+            // Consultar todas las sedes
+            .route(
+                RequestPredicates.path("/api/v1/inventory/venues"),
+                HandlerFunctions.http()
+            )
+
             // Consultar sede
             .route(
                 RequestPredicates.path("/api/v1/inventory/venue/{venueId}"),
@@ -61,6 +67,18 @@ public class InventoryServiceRoutes {
                 RequestPredicates.path(
                     "/api/v1/inventory/event/{eventId}/simulate-concurrent-booking"
                 ),
+                HandlerFunctions.http()
+            )
+
+            // Ruta para crear un evento
+            .route(
+                RequestPredicates.path("/api/v1/inventory/events"),
+                HandlerFunctions.http()
+            )
+
+            // Ruta para crear una sede
+            .route(
+                RequestPredicates.path("/api/v1/inventory/venues"),
                 HandlerFunctions.http()
             )
 

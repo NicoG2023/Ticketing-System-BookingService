@@ -3,6 +3,8 @@ package com.nicog.inventoryservice.service;
 import com.nicog.inventoryservice.entity.Event;
 import com.nicog.inventoryservice.entity.Venue;
 import com.nicog.inventoryservice.repository.FirebaseInventoryRepository;
+import com.nicog.inventoryservice.request.CreateEventRequest;
+import com.nicog.inventoryservice.request.CreateVenueRequest;
 import com.nicog.inventoryservice.response.ConcurrentBookingSimulationResponse;
 import com.nicog.inventoryservice.response.EventInventoryResponse;
 import com.nicog.inventoryservice.response.VenueInventoryResponse;
@@ -235,6 +237,163 @@ public class InventoryService {
             throw new RuntimeException(
                 "No fue posible ejecutar la simulación de concurrencia",
                 exception
+            );
+        }
+    }
+
+    public EventInventoryResponse createEvent(
+        final CreateEventRequest request
+    ) {
+        validateCreateEventRequest(request);
+
+        try {
+            Venue venue = firebaseInventoryRepository
+                .findVenueById(request.getVenueId())
+                .join();
+
+            Event event = Event.builder()
+                .id(System.currentTimeMillis())
+                .name(request.getName())
+                .totalCapacity(request.getTotalCapacity())
+                .leftCapacity(request.getTotalCapacity())
+                .venueId(request.getVenueId())
+                .ticketPrice(request.getTicketPrice())
+                .build();
+
+            Event savedEvent = firebaseInventoryRepository
+                .saveEvent(event)
+                .join();
+
+            return EventInventoryResponse.builder()
+                .eventId(savedEvent.getId())
+                .event(savedEvent.getName())
+                .capacity(savedEvent.getLeftCapacity())
+                .venue(venue.getName())
+                .ticketPrice(savedEvent.getTicketPrice())
+                .build();
+        } catch (Exception exception) {
+            log.error("Error creando evento", exception);
+            throw new RuntimeException("No fue posible crear el evento");
+        }
+    }
+
+    private void validateCreateEventRequest(final CreateEventRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException(
+                "La solicitud no puede ser nula"
+            );
+        }
+
+        if (request.getName() == null || request.getName().isBlank()) {
+            throw new IllegalArgumentException(
+                "El nombre del evento es obligatorio"
+            );
+        }
+
+        if (
+            request.getTotalCapacity() == null ||
+            request.getTotalCapacity() <= 0
+        ) {
+            throw new IllegalArgumentException(
+                "La capacidad total debe ser mayor a cero"
+            );
+        }
+
+        if (request.getVenueId() == null) {
+            throw new IllegalArgumentException("La sede es obligatoria");
+        }
+
+        if (request.getTicketPrice() == null) {
+            throw new IllegalArgumentException(
+                "El precio del ticket es obligatorio"
+            );
+        }
+
+        if (request.getTicketPrice().signum() <= 0) {
+            throw new IllegalArgumentException(
+                "El precio del ticket debe ser mayor a cero"
+            );
+        }
+    }
+
+    public List<VenueInventoryResponse> getAllVenues() {
+        try {
+            List<Venue> venues = firebaseInventoryRepository
+                .findAllVenues()
+                .join();
+
+            List<VenueInventoryResponse> response = new ArrayList<>();
+
+            for (Venue venue : venues) {
+                response.add(
+                    VenueInventoryResponse.builder()
+                        .venueId(venue.getId())
+                        .venueName(venue.getName())
+                        .totalCapacity(venue.getTotalCapacity())
+                        .build()
+                );
+            }
+
+            return response;
+        } catch (Exception exception) {
+            log.error("Error obteniendo sedes", exception);
+            throw new RuntimeException("No fue posible consultar las sedes");
+        }
+    }
+
+    public VenueInventoryResponse createVenue(
+        final CreateVenueRequest request
+    ) {
+        validateCreateVenueRequest(request);
+
+        try {
+            Venue venue = Venue.builder()
+                .id(System.currentTimeMillis())
+                .name(request.getName())
+                .address(request.getAddress())
+                .totalCapacity(request.getTotalCapacity())
+                .build();
+
+            Venue savedVenue = firebaseInventoryRepository
+                .saveVenue(venue)
+                .join();
+
+            return VenueInventoryResponse.builder()
+                .venueId(savedVenue.getId())
+                .venueName(savedVenue.getName())
+                .totalCapacity(savedVenue.getTotalCapacity())
+                .build();
+        } catch (Exception exception) {
+            log.error("Error creando sede", exception);
+            throw new RuntimeException("No fue posible crear la sede");
+        }
+    }
+
+    private void validateCreateVenueRequest(final CreateVenueRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException(
+                "La solicitud no puede ser nula"
+            );
+        }
+
+        if (request.getName() == null || request.getName().isBlank()) {
+            throw new IllegalArgumentException(
+                "El nombre de la sede es obligatorio"
+            );
+        }
+
+        if (request.getAddress() == null || request.getAddress().isBlank()) {
+            throw new IllegalArgumentException(
+                "La dirección de la sede es obligatoria"
+            );
+        }
+
+        if (
+            request.getTotalCapacity() == null ||
+            request.getTotalCapacity() <= 0
+        ) {
+            throw new IllegalArgumentException(
+                "La capacidad total debe ser mayor a cero"
             );
         }
     }

@@ -14,7 +14,11 @@ let keycloakConfig = {
 };
 
 function getRedirectUri() {
-  return window.location.origin + "/";
+  return window.location.origin + window.location.pathname;
+}
+
+function getSilentCheckSsoUri() {
+  return window.location.origin + "/silent-check-sso.html";
 }
 
 export function setKeycloakJsUrl(url) {
@@ -75,9 +79,7 @@ export async function initKeycloak() {
   const Keycloak = await loadKeycloakConstructor();
 
   if (keycloak) {
-    const alreadyAuthenticated = keycloak.authenticated === true;
-    console.log("[keycloak-auth] keycloak ya existe. authenticated:", alreadyAuthenticated);
-    return alreadyAuthenticated;
+    return keycloak.authenticated === true;
   }
 
   keycloak = new Keycloak({
@@ -88,11 +90,16 @@ export async function initKeycloak() {
 
   if (!initPromise) {
     initPromise = keycloak.init({
+      onLoad: "check-sso",
+      silentCheckSsoRedirectUri: getSilentCheckSsoUri(),
+
       pkceMethod: "S256",
       checkLoginIframe: false,
-      responseMode: "query",
       flow: "standard",
-      redirectUri: getRedirectUri(),
+
+      // Yo quitaría responseMode: "query" salvo que tengas una razón fuerte.
+      // El default de Keycloak es fragment.
+      // responseMode: "fragment",
     });
   }
 
@@ -100,12 +107,6 @@ export async function initKeycloak() {
 
   console.log("[keycloak-auth] init result authenticated:", authenticated);
   console.log("[keycloak-auth] token existe:", Boolean(keycloak.token));
-  console.log(
-    "[keycloak-auth] username:",
-    keycloak?.tokenParsed?.preferred_username ||
-      keycloak?.tokenParsed?.name ||
-      "null"
-  );
 
   return authenticated === true;
 }
@@ -115,16 +116,11 @@ export async function login() {
 
   const kc = await ensureKeycloakInitialized();
 
-  const redirectUri = getRedirectUri();
-
-  console.log("[keycloak-auth] redirectUri usado:", redirectUri);
+  const redirectUri = window.location.href;
 
   const loginUrl = await kc.createLoginUrl({
     redirectUri,
   });
-
-  console.log("[keycloak-auth] loginUrl:", loginUrl);
-  console.log("[keycloak-auth] navegando a loginUrl");
 
   window.location.assign(loginUrl);
 
@@ -137,12 +133,11 @@ export async function logout() {
   const kc = await ensureKeycloakInitialized();
 
   if (!kc.authenticated) {
-    console.log("[keycloak-auth] logout ignorado: no hay sesión autenticada");
     return true;
   }
 
   await kc.logout({
-    redirectUri: getRedirectUri(),
+    redirectUri: window.location.origin + "/",
   });
 
   return true;

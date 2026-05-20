@@ -45,3 +45,20 @@ pub struct ConcurrentBookingSimulationResponse {
     pub request_b_status: String,
     pub conclusion: String,
 }
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateEventRequest {
+    pub name: String,
+    pub total_capacity: u64,
+    pub venue_id: u64,
+    pub ticket_price: f64,
+}
+
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CreateVenueRequest {
+    pub name: String,
+    pub address: String,
+    pub total_capacity: u64,
+}

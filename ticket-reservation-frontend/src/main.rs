@@ -6,7 +6,7 @@ mod components;
 mod models;
 mod views;
 
-use views::{Blog, Events, Home, Inventory, Navbar, Simulations};
+use views::{Blog, Events, Home, Inventory, Navbar, Simulations, Venue};
 
 #[derive(Clone)]
 pub struct AuthState {
@@ -16,6 +16,7 @@ pub struct AuthState {
     pub user_id: Signal<Option<String>>,
     pub error: Signal<Option<String>>,
     pub login_in_progress: Signal<bool>,
+    pub notice: Signal<Option<String>>,
 }
 
 impl AuthState {
@@ -50,6 +51,9 @@ pub enum Route {
 
         #[route("/inventory")]
         Inventory {},
+
+        #[route("/venues")]
+        Venue {},
 }
 
 const FAVICON: Asset = asset!("/assets/favicon.ico");
@@ -75,6 +79,7 @@ fn App() -> Element {
     let mut user_id = use_signal(|| None::<String>);
     let mut error = use_signal(|| None::<String>);
     let login_in_progress = use_signal(|| false);
+    let notice = use_signal(|| None::<String>);
 
     let mut auth_bootstrap_started = use_signal(|| false);
 
@@ -85,6 +90,7 @@ fn App() -> Element {
         user_id,
         error,
         login_in_progress,
+        notice,
     });
 
     use_effect(move || {

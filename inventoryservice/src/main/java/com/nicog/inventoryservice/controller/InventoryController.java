@@ -1,5 +1,7 @@
 package com.nicog.inventoryservice.controller;
 
+import com.nicog.inventoryservice.request.CreateEventRequest;
+import com.nicog.inventoryservice.request.CreateVenueRequest;
 import com.nicog.inventoryservice.response.ConcurrentBookingSimulationResponse;
 import com.nicog.inventoryservice.response.EventInventoryResponse;
 import com.nicog.inventoryservice.response.VenueInventoryResponse;
@@ -8,7 +10,9 @@ import java.util.List;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -68,5 +72,34 @@ public class InventoryController {
         return ResponseEntity.ok(
             inventoryService.simulateConcurrentBooking(eventId)
         );
+    }
+
+    @PostMapping(
+        consumes = "application/json",
+        produces = "application/json",
+        path = "/inventory/events"
+    )
+    public ResponseEntity<EventInventoryResponse> createEvent(
+        @RequestBody CreateEventRequest request
+    ) {
+        return ResponseEntity.ok(inventoryService.createEvent(request));
+    }
+
+    @GetMapping("/inventory/venues")
+    public ResponseEntity<
+        List<VenueInventoryResponse>
+    > inventoryGetAllVenues() {
+        return ResponseEntity.ok(inventoryService.getAllVenues());
+    }
+
+    @PostMapping(
+        consumes = "application/json",
+        produces = "application/json",
+        path = "/inventory/venues"
+    )
+    public ResponseEntity<VenueInventoryResponse> createVenue(
+        @RequestBody CreateVenueRequest request
+    ) {
+        return ResponseEntity.ok(inventoryService.createVenue(request));
     }
 }

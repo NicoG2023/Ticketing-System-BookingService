@@ -273,4 +273,92 @@ public class FirebaseInventoryRepository {
 
         return future;
     }
+
+    public CompletableFuture<Event> saveEvent(Event event) {
+        CompletableFuture<Event> future = new CompletableFuture<>();
+
+        if (event.getId() == null) {
+            Long generatedId = System.currentTimeMillis();
+            event.setId(generatedId);
+        }
+
+        eventsRef
+            .child(String.valueOf(event.getId()))
+            .setValue(event, (databaseError, databaseReference) -> {
+                if (databaseError != null) {
+                    future.completeExceptionally(
+                        new RuntimeException(
+                            "Error guardando evento: " +
+                                databaseError.getMessage()
+                        )
+                    );
+                    return;
+                }
+
+                future.complete(event);
+            });
+
+        return future;
+    }
+
+    public CompletableFuture<List<Venue>> findAllVenues() {
+        CompletableFuture<List<Venue>> future = new CompletableFuture<>();
+
+        venuesRef.addListenerForSingleValueEvent(
+            new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    List<Venue> venues = new ArrayList<>();
+
+                    for (DataSnapshot child : snapshot.getChildren()) {
+                        Venue venue = child.getValue(Venue.class);
+
+                        if (venue != null) {
+                            venues.add(venue);
+                        }
+                    }
+
+                    future.complete(venues);
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    future.completeExceptionally(
+                        new RuntimeException(
+                            "Error consultando sedes: " + error.getMessage()
+                        )
+                    );
+                }
+            }
+        );
+
+        return future;
+    }
+
+    public CompletableFuture<Venue> saveVenue(Venue venue) {
+        CompletableFuture<Venue> future = new CompletableFuture<>();
+
+        if (venue.getId() == null) {
+            Long generatedId = System.currentTimeMillis();
+            venue.setId(generatedId);
+        }
+
+        venuesRef
+            .child(String.valueOf(venue.getId()))
+            .setValue(venue, (databaseError, databaseReference) -> {
+                if (databaseError != null) {
+                    future.completeExceptionally(
+                        new RuntimeException(
+                            "Error guardando sede: " +
+                                databaseError.getMessage()
+                        )
+                    );
+                    return;
+                }
+
+                future.complete(venue);
+            });
+
+        return future;
+    }
 }

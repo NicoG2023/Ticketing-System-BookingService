@@ -1,23 +1,19 @@
-package com.nicog.inventoryservice.entity;
+package com.nicog.inventoryservice.request;
 
 import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
+@Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class Event {
+@AllArgsConstructor
+public class CreateEventRequest {
 
-    private Long id;
     private String name;
     private Long totalCapacity;
-    private Long leftCapacity;
     private Long venueId;
     private BigDecimal ticketPrice;
 }

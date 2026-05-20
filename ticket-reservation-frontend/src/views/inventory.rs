@@ -1,33 +1,59 @@
 use dioxus::prelude::*;
 
 use crate::api;
-use crate::models::EventInventoryResponse;
-use crate::AuthState;
+use crate::components::RequireAuth;
+use crate::models::{CreateEventRequest, EventInventoryResponse, VenueInventoryResponse};
 
 const INVENTORY_CSS: Asset = asset!("/assets/styling/inventory.css");
 
 #[component]
 pub fn Inventory() -> Element {
-    let auth_state = use_context::<AuthState>();
+    rsx! {
+        RequireAuth {
+            InventoryContent {}
+        }
+    }
+}
 
+#[component]
+fn InventoryContent() -> Element {
     let mut events = use_signal(|| Vec::<EventInventoryResponse>::new());
+    let mut venues = use_signal(|| Vec::<VenueInventoryResponse>::new());
+
     let mut loading = use_signal(|| true);
     let mut action_loading = use_signal(|| false);
     let mut error = use_signal(|| None::<String>);
     let mut success = use_signal(|| None::<String>);
+
+    let mut event_name = use_signal(|| String::new());
+    let mut event_capacity = use_signal(|| "100".to_string());
+    let mut event_price = use_signal(|| "150000".to_string());
+    let mut selected_venue_id = use_signal(|| String::new());
 
     let mut reload_inventory = move || {
         spawn(async move {
             loading.set(true);
             error.set(None);
 
-            match api::get_events().await {
+            let events_result = api::get_events().await;
+            let venues_result = api::get_venues().await;
+
+            match events_result {
+                Ok(data) => events.set(data),
+                Err(message) => error.set(Some(message)),
+            }
+
+            match venues_result {
                 Ok(data) => {
-                    events.set(data);
+                    if selected_venue_id().is_empty() {
+                        if let Some(first_venue) = data.first() {
+                            selected_venue_id.set(first_venue.venue_id.to_string());
+                        }
+                    }
+
+                    venues.set(data);
                 }
-                Err(message) => {
-                    error.set(Some(message));
-                }
+                Err(message) => error.set(Some(message)),
             }
 
             loading.set(false);
@@ -44,13 +70,21 @@ pub fn Inventory() -> Element {
         main {
             class: "inventory-page",
 
-            div {
+            section {
                 class: "inventory-header",
 
                 div {
-                    h1 { "Gestión de inventario" }
+                    class: "inventory-header__content",
+
+                    span {
+                        class: "eyebrow",
+                        "Admin"
+                    }
+
+                    h1 { "Inventario" }
+
                     p {
-                        "Consulta eventos, revisa capacidad disponible y ejecuta operaciones de descuento o liberación de inventario."
+                        "Registra eventos, consulta la capacidad disponible y administra el inventario del sistema."
                     }
                 }
 
@@ -69,33 +103,225 @@ pub fn Inventory() -> Element {
                 }
             }
 
-            if !auth_state.is_logged_in() {
+            if let Some(message) = error() {
                 div {
-                    class: "alert alert-warning",
-                    "Debes iniciar sesión para gestionar el inventario."
+                    class: "alert alert-error",
+                    "{message}"
                 }
-            } else {
-                if let Some(message) = error() {
+            }
+
+            if let Some(message) = success() {
+                div {
+                    class: "alert alert-success",
+                    "{message}"
+                }
+            }
+
+            section {
+                class: "panel",
+
+                div {
+                    class: "panel-header",
+
                     div {
-                        class: "alert alert-error",
-                        "{message}"
+                        h2 { "Registrar evento" }
+                        p { "Crea un evento asociado a una sede existente." }
                     }
                 }
 
-                if let Some(message) = success() {
+                div {
+                    class: "create-event-form",
+
                     div {
-                        class: "alert alert-success",
-                        "{message}"
+                        class: "form-field",
+                        label { "Nombre" }
+
+                        input {
+                            placeholder: "Concierto de prueba",
+                            value: "{event_name()}",
+                            oninput: move |evt| {
+                                event_name.set(evt.value());
+                            }
+                        }
+                    }
+
+                    div {
+                        class: "form-field",
+                        label { "Capacidad" }
+
+                        input {
+                            r#type: "number",
+                            min: "1",
+                            value: "{event_capacity()}",
+                            oninput: move |evt| {
+                                event_capacity.set(evt.value());
+                            }
+                        }
+                    }
+
+                    div {
+                        class: "form-field",
+                        label { "Sede" }
+
+                        if venues().is_empty() {
+                            select {
+                                disabled: true,
+                                option {
+                                    value: "",
+                                    "No hay sedes registradas"
+                                }
+                            }
+                        } else {
+                            select {
+                                value: "{selected_venue_id()}",
+                                onchange: move |evt| {
+                                    selected_venue_id.set(evt.value());
+                                },
+
+                                for venue in venues() {
+                                    option {
+                                        value: "{venue.venue_id}",
+                                        "{venue.venue_name}"
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    div {
+                        class: "form-field",
+                        label { "Precio" }
+
+                        input {
+                            r#type: "number",
+                            min: "1",
+                            value: "{event_price()}",
+                            oninput: move |evt| {
+                                event_price.set(evt.value());
+                            }
+                        }
+                    }
+
+                    button {
+                        class: "primary-button",
+                        disabled: action_loading() || venues().is_empty(),
+                        onclick: move |_| {
+                            let name = event_name();
+                            let capacity_text = event_capacity();
+                            let venue_id_text = selected_venue_id();
+                            let price_text = event_price();
+
+                            spawn(async move {
+                                action_loading.set(true);
+                                error.set(None);
+                                success.set(None);
+
+                                if name.trim().is_empty() {
+                                    error.set(Some("El nombre del evento es obligatorio.".to_string()));
+                                    action_loading.set(false);
+                                    return;
+                                }
+
+                                let total_capacity = match capacity_text.parse::<u64>() {
+                                    Ok(value) if value > 0 => value,
+                                    _ => {
+                                        error.set(Some("La capacidad debe ser mayor a cero.".to_string()));
+                                        action_loading.set(false);
+                                        return;
+                                    }
+                                };
+
+                                if venue_id_text.trim().is_empty() {
+                                    error.set(Some("Debes seleccionar una sede.".to_string()));
+                                    action_loading.set(false);
+                                    return;
+                                }
+
+                                let venue_id = match venue_id_text.parse::<u64>() {
+                                    Ok(value) if value > 0 => value,
+                                    _ => {
+                                        error.set(Some("La sede seleccionada no es válida.".to_string()));
+                                        action_loading.set(false);
+                                        return;
+                                    }
+                                };
+
+                                let ticket_price = match price_text.parse::<f64>() {
+                                    Ok(value) if value > 0.0 => value,
+                                    _ => {
+                                        error.set(Some("El precio debe ser mayor a cero.".to_string()));
+                                        action_loading.set(false);
+                                        return;
+                                    }
+                                };
+
+                                let request = CreateEventRequest {
+                                    name,
+                                    total_capacity,
+                                    venue_id,
+                                    ticket_price,
+                                };
+
+                                match api::create_event(request).await {
+                                    Ok(created_event) => {
+                                        success.set(Some(format!(
+                                            "Evento creado: {}",
+                                            created_event.event
+                                        )));
+
+                                        event_name.set(String::new());
+                                        event_capacity.set("100".to_string());
+                                        event_price.set("150000".to_string());
+
+                                        reload_inventory();
+                                    }
+                                    Err(message) => {
+                                        error.set(Some(message));
+                                    }
+                                }
+
+                                action_loading.set(false);
+                            });
+                        },
+
+                        if action_loading() {
+                            "Guardando..."
+                        } else if venues().is_empty() {
+                            "Sin sedes"
+                        } else {
+                            "Crear evento"
+                        }
+                    }
+                }
+            }
+
+            section {
+                class: "panel",
+
+                div {
+                    class: "panel-header",
+
+                    div {
+                        h2 { "Eventos registrados" }
+                        p { "Administra la capacidad disponible de cada evento." }
+                    }
+
+                    span {
+                        class: "count-badge",
+                        "{events().len()} eventos"
                     }
                 }
 
                 if loading() {
-                    p { "Cargando inventario..." }
+                    p {
+                        class: "muted",
+                        "Cargando inventario..."
+                    }
                 } else if events().is_empty() {
                     div {
                         class: "empty-state",
-                        h2 { "No hay eventos registrados" }
-                        p { "Cuando cargues eventos en Firebase, aparecerán en esta pantalla." }
+                        h3 { "No hay eventos registrados" }
+                        p { "Crea el primer evento usando el formulario superior." }
                     }
                 } else {
                     div {
@@ -137,16 +363,16 @@ fn InventoryCard(
             class: "inventory-card",
 
             div {
-                class: "inventory-card__header",
+                class: "inventory-card__top",
 
                 div {
-                    h2 { "{event.event}" }
-                    p { "Evento ID: {event.event_id}" }
+                    h3 { "{event.event}" }
+                    p { "ID {event.event_id}" }
                 }
 
                 span {
                     class: "capacity-badge",
-                    "{event.capacity} disponibles"
+                    "{event.capacity}"
                 }
             }
 
@@ -154,22 +380,18 @@ fn InventoryCard(
                 class: "inventory-card__details",
 
                 p {
-                    strong { "Sede: " }
-                    "{event.venue}"
+                    span { "Sede" }
+                    strong { "{event.venue}" }
                 }
 
                 p {
-                    strong { "Precio: " }
-                    "${event.ticket_price}"
+                    span { "Precio" }
+                    strong { "${event.ticket_price}" }
                 }
             }
 
             div {
                 class: "inventory-card__actions",
-
-                label {
-                    "Cantidad"
-                }
 
                 input {
                     r#type: "number",
@@ -184,12 +406,13 @@ fn InventoryCard(
                     class: "button-row",
 
                     button {
-                        class: "danger-button",
+                        class: "ghost-button danger",
                         disabled: action_loading(),
                         onclick: move |_| {
                             let amount_text = amount();
                             let on_success = on_success;
                             let on_error = on_error;
+                            let event_id = event.event_id;
 
                             spawn(async move {
                                 action_loading.set(true);
@@ -203,12 +426,12 @@ fn InventoryCard(
                                     }
                                 };
 
-                                match api::decrease_event_capacity(event.event_id, quantity).await {
+                                match api::decrease_event_capacity(event_id, quantity).await {
                                     Ok(_) => {
                                         on_success.call(format!(
                                             "Se descontaron {} tickets del evento {}.",
                                             quantity,
-                                            event.event_id
+                                            event_id
                                         ));
                                     }
                                     Err(message) => {
@@ -221,19 +444,20 @@ fn InventoryCard(
                         },
 
                         if action_loading() {
-                            "Procesando..."
+                            "..."
                         } else {
                             "Descontar"
                         }
                     }
 
                     button {
-                        class: "success-button",
+                        class: "ghost-button success",
                         disabled: action_loading(),
                         onclick: move |_| {
                             let amount_text = amount();
                             let on_success = on_success;
                             let on_error = on_error;
+                            let event_id = event.event_id;
 
                             spawn(async move {
                                 action_loading.set(true);
@@ -247,12 +471,12 @@ fn InventoryCard(
                                     }
                                 };
 
-                                match api::release_event_capacity(event.event_id, quantity).await {
+                                match api::release_event_capacity(event_id, quantity).await {
                                     Ok(_) => {
                                         on_success.call(format!(
                                             "Se liberaron {} tickets del evento {}.",
                                             quantity,
-                                            event.event_id
+                                            event_id
                                         ));
                                     }
                                     Err(message) => {
@@ -265,7 +489,7 @@ fn InventoryCard(
                         },
 
                         if action_loading() {
-                            "Procesando..."
+                            "..."
                         } else {
                             "Liberar"
                         }

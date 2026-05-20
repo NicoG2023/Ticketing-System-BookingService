@@ -1,19 +1,16 @@
-package com.nicog.inventoryservice.entity;
+package com.nicog.inventoryservice.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Getter;
+import lombok.Data;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 
-@Getter
-@Setter
+@Data
 @Builder
-@AllArgsConstructor
 @NoArgsConstructor
-public class Venue {
+@AllArgsConstructor
+public class CreateVenueRequest {
 
-    private Long id;
     private String name;
     private String address;
     private Long totalCapacity;

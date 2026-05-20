@@ -1,6 +1,7 @@
 use dioxus::prelude::*;
 
 use crate::api;
+use crate::components::RequireAuth;
 use crate::models::{BookingRequest, BookingResponse, EventInventoryResponse};
 use crate::AuthState;
 
@@ -8,6 +9,14 @@ const EVENTS_CSS: Asset = asset!("/assets/styling/events.css");
 
 #[component]
 pub fn Events() -> Element {
+    rsx! {
+        RequireAuth {  }
+        EventsContent {}
+    }
+}
+
+#[component]
+fn EventsContent() -> Element {
     let auth_state = use_context::<AuthState>();
 
     let mut events = use_signal(|| Vec::<EventInventoryResponse>::new());
@@ -41,14 +50,6 @@ pub fn Events() -> Element {
 
             h1 { "Eventos disponibles" }
 
-            if !auth_state.is_logged_in() {
-                div {
-                    class: "alert alert-warning",
-                    "Debes iniciar sesión para consultar eventos y crear reservas."
-                }
-            } else if loading() {
-                p { "Cargando eventos..." }
-            } else {
                 if let Some(message) = error() {
                     div {
                         class: "alert alert-error",
@@ -83,7 +84,6 @@ pub fn Events() -> Element {
                         }
                     }
                 }
-            }
         }
     }
 }
