@@ -1,4 +1,7 @@
 use dioxus::prelude::*;
+use gloo_events::EventListener;
+use std::rc::Rc;
+use web_sys::window as browser_window;
 
 mod api;
 mod auth;
@@ -91,6 +94,36 @@ fn App() -> Element {
         error,
         login_in_progress,
         notice,
+    });
+
+    let _session_expired_listener = use_hook(move || {
+        let Some(window) = browser_window() else {
+            return None;
+        };
+
+        let mut authenticated = authenticated;
+        let mut username = username;
+        let mut user_id = user_id;
+        let mut error = error;
+        let mut notice = notice;
+
+        Some(Rc::new(EventListener::new(
+            &window,
+            "ticket-auth-session-expired",
+            move |_| {
+                authenticated.set(false);
+                username.set(None);
+                user_id.set(None);
+                error.set(None);
+                notice.set(Some(
+                    "Tu sesión expiró. Inicia sesión de nuevo para continuar.".to_string(),
+                ));
+
+                if let Some(window) = browser_window() {
+                    let _ = window.location().set_href("/");
+                }
+            },
+        )))
     });
 
     use_effect(move || {

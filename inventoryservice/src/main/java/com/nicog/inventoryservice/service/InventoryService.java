@@ -251,6 +251,8 @@ public class InventoryService {
                 .findVenueById(request.getVenueId())
                 .join();
 
+            validateEventCapacityAgainstVenue(request, venue);
+
             Event event = Event.builder()
                 .id(System.currentTimeMillis())
                 .name(request.getName())
@@ -271,6 +273,8 @@ public class InventoryService {
                 .venue(venue.getName())
                 .ticketPrice(savedEvent.getTicketPrice())
                 .build();
+        } catch (IllegalArgumentException exception) {
+            throw exception;
         } catch (Exception exception) {
             log.error("Error creando evento", exception);
             throw new RuntimeException("No fue posible crear el evento");
@@ -309,9 +313,34 @@ public class InventoryService {
             );
         }
 
-        if (request.getTicketPrice().signum() <= 0) {
+        if (request.getTicketPrice() <= 0) {
             throw new IllegalArgumentException(
                 "El precio del ticket debe ser mayor a cero"
+            );
+        }
+    }
+
+    private void validateEventCapacityAgainstVenue(
+        final CreateEventRequest request,
+        final Venue venue
+    ) {
+        if (venue == null) {
+            throw new IllegalArgumentException(
+                "La sede seleccionada no existe"
+            );
+        }
+
+        if (venue.getTotalCapacity() == null || venue.getTotalCapacity() <= 0) {
+            throw new IllegalArgumentException(
+                "La sede seleccionada no tiene una capacidad válida"
+            );
+        }
+
+        if (request.getTotalCapacity() > venue.getTotalCapacity()) {
+            throw new IllegalArgumentException(
+                "La capacidad del evento no puede superar la capacidad total de la sede. " +
+                    "Capacidad de la sede: " +
+                    venue.getTotalCapacity()
             );
         }
     }
@@ -395,6 +424,60 @@ public class InventoryService {
             throw new IllegalArgumentException(
                 "La capacidad total debe ser mayor a cero"
             );
+        }
+    }
+
+    public void deleteEvent(final Long eventId) {
+        if (eventId == null) {
+            throw new IllegalArgumentException(
+                "El id del evento es obligatorio"
+            );
+        }
+
+        try {
+            firebaseInventoryRepository.deleteEventById(eventId).join();
+
+            log.info("Evento eliminado con id: {}", eventId);
+        } catch (Exception exception) {
+            log.error("Error eliminando evento con id: {}", eventId, exception);
+            throw new RuntimeException("No fue posible eliminar el evento");
+        }
+    }
+
+    public void deleteVenue(final Long venueId) {
+        if (venueId == null) {
+            throw new IllegalArgumentException(
+                "El id de la sede es obligatorio"
+            );
+        }
+
+        try {
+            Venue venue = firebaseInventoryRepository
+                .findVenueById(venueId)
+                .join();
+
+            List<Event> events = firebaseInventoryRepository
+                .findAllEvents()
+                .join();
+
+            boolean venueHasEvents = events
+                .stream()
+                .anyMatch(event -> venueId.equals(event.getVenueId()));
+
+            if (venueHasEvents) {
+                throw new IllegalArgumentException(
+                    "No se puede eliminar la sede porque tiene eventos asociados"
+                );
+            }
+
+            firebaseInventoryRepository.deleteVenueById(venue.getId()).join();
+
+            log.info("Sede eliminada con id: {}", venueId);
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            log.error("Error eliminando sede con id: {}", venueId, exception);
+            throw new RuntimeException("No fue posible eliminar la sede");
         }
     }
 }

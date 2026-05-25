@@ -1,6 +1,5 @@
 package com.nicog.inventoryservice.entity;
 
-import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
@@ -19,5 +18,5 @@ public class Event {
     private Long totalCapacity;
     private Long leftCapacity;
     private Long venueId;
-    private BigDecimal ticketPrice;
+    private Double ticketPrice;
 }

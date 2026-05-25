@@ -1,0 +1,90 @@
+@media (max-width: 1050px) {
+    .create-event-form {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .primary-button {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 900px) {
+    .inventory-toolbar {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .inventory-search {
+        max-width: none;
+    }
+
+    .inventory-toolbar__meta {
+        white-space: normal;
+    }
+
+    .event-row__summary {
+        grid-template-columns: 1fr;
+    }
+
+    .event-row__metrics {
+        justify-content: space-between;
+        flex-wrap: wrap;
+    }
+
+    .event-row__detail-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .event-row__actions-panel {
+        grid-template-columns: 1fr;
+    }
+
+    .event-row__actions-form {
+        grid-template-columns: 1fr;
+    }
+
+    .event-row__action-buttons {
+        grid-template-columns: 1fr;
+    }
+
+    .delete-confirmation {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .delete-confirmation__actions {
+        flex-direction: column;
+    }
+}
+
+@media (max-width: 720px) {
+    .inventory-page {
+        padding: 1rem;
+    }
+
+    .inventory-header {
+        flex-direction: column;
+        border-radius: 22px;
+    }
+
+    .panel {
+        padding: 1rem;
+        border-radius: 20px;
+    }
+
+    .panel-header {
+        flex-direction: column;
+    }
+
+    .create-event-form {
+        grid-template-columns: 1fr;
+    }
+
+    .button-row {
+        flex-direction: column;
+    }
+
+    .inventory-grid {
+        grid-template-columns: 1fr;
+    }
+}

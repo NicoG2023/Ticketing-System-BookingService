@@ -361,4 +361,98 @@ public class FirebaseInventoryRepository {
 
         return future;
     }
+
+    public CompletableFuture<Void> deleteEventById(Long eventId) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+
+        eventsRef.child(String.valueOf(eventId)).addListenerForSingleValueEvent(
+            new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (!snapshot.exists()) {
+                        future.completeExceptionally(
+                            new RuntimeException(
+                                "No existe el evento con id: " + eventId
+                            )
+                        );
+                        return;
+                    }
+
+                    eventsRef
+                        .child(String.valueOf(eventId))
+                        .removeValue((databaseError, databaseReference) -> {
+                            if (databaseError != null) {
+                                future.completeExceptionally(
+                                    new RuntimeException(
+                                        "Error eliminando evento: " +
+                                            databaseError.getMessage()
+                                    )
+                                );
+                                return;
+                            }
+
+                            future.complete(null);
+                        });
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    future.completeExceptionally(
+                        new RuntimeException(
+                            "Error consultando evento: " + error.getMessage()
+                        )
+                    );
+                }
+            }
+        );
+
+        return future;
+    }
+
+    public CompletableFuture<Void> deleteVenueById(Long venueId) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+
+        venuesRef.child(String.valueOf(venueId)).addListenerForSingleValueEvent(
+            new ValueEventListener() {
+                @Override
+                public void onDataChange(DataSnapshot snapshot) {
+                    if (!snapshot.exists()) {
+                        future.completeExceptionally(
+                            new RuntimeException(
+                                "No existe la sede con id: " + venueId
+                            )
+                        );
+                        return;
+                    }
+
+                    venuesRef
+                        .child(String.valueOf(venueId))
+                        .removeValue((databaseError, databaseReference) -> {
+                            if (databaseError != null) {
+                                future.completeExceptionally(
+                                    new RuntimeException(
+                                        "Error eliminando sede: " +
+                                            databaseError.getMessage()
+                                    )
+                                );
+                                return;
+                            }
+
+                            future.complete(null);
+                        });
+                }
+
+                @Override
+                public void onCancelled(DatabaseError error) {
+                    future.completeExceptionally(
+                        new RuntimeException(
+                            "Error consultando sede: " + error.getMessage()
+                        )
+                    );
+                }
+            }
+        );
+
+        return future;
+    }
 }

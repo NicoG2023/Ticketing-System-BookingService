@@ -8,6 +8,7 @@ import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctio
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
@@ -79,6 +80,22 @@ public class InventoryServiceRoutes {
             // Ruta para crear una sede
             .route(
                 RequestPredicates.path("/api/v1/inventory/venues"),
+                HandlerFunctions.http()
+            )
+
+            // Eliminar evento
+            .route(
+                RequestPredicates.path("/api/v1/inventory/event/{eventId}").and(
+                    RequestPredicates.method(HttpMethod.DELETE)
+                ),
+                HandlerFunctions.http()
+            )
+
+            // Eliminar sede
+            .route(
+                RequestPredicates.path("/api/v1/inventory/venue/{venueId}").and(
+                    RequestPredicates.method(HttpMethod.DELETE)
+                ),
                 HandlerFunctions.http()
             )
 

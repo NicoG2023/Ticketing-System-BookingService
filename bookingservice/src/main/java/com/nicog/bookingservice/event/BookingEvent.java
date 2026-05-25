@@ -1,6 +1,5 @@
 package com.nicog.bookingservice.event;
 
-import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -15,5 +14,5 @@ public class BookingEvent {
     private String userId;
     private Long eventId;
     private Long ticketCount;
-    private BigDecimal totalPrice;
+    private Double totalPrice;
 }

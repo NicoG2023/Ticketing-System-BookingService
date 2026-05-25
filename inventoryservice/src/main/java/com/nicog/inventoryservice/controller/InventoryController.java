@@ -8,6 +8,7 @@ import com.nicog.inventoryservice.response.VenueInventoryResponse;
 import com.nicog.inventoryservice.service.InventoryService;
 import java.util.List;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -101,5 +102,17 @@ public class InventoryController {
         @RequestBody CreateVenueRequest request
     ) {
         return ResponseEntity.ok(inventoryService.createVenue(request));
+    }
+
+    @DeleteMapping("/inventory/event/{eventId}")
+    public ResponseEntity<Void> deleteEvent(@PathVariable Long eventId) {
+        inventoryService.deleteEvent(eventId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @DeleteMapping("/inventory/venue/{venueId}")
+    public ResponseEntity<Void> deleteVenue(@PathVariable Long venueId) {
+        inventoryService.deleteVenue(venueId);
+        return ResponseEntity.noContent().build();
     }
 }

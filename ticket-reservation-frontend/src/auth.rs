@@ -21,6 +21,52 @@ function getSilentCheckSsoUri() {
   return window.location.origin + "/silent-check-sso.html";
 }
 
+function notifySessionExpired() {
+  window.dispatchEvent(
+    new CustomEvent("ticket-auth-session-expired", {
+      detail: {
+        message: "Tu sesión expiró. Inicia sesión de nuevo para continuar.",
+      },
+    }),
+  );
+}
+
+let refreshPromise = null;
+
+async function refreshTokenOrNotify() {
+  if (!keycloak) {
+    notifySessionExpired();
+    return null;
+  }
+
+  if (!keycloak.authenticated) {
+    notifySessionExpired();
+    return null;
+  }
+
+  try {
+    if (!refreshPromise) {
+      refreshPromise = keycloak.updateToken(30);
+    }
+
+    const refreshed = await refreshPromise;
+
+    console.log("[keycloak-auth] token refresh result:", refreshed);
+
+    refreshPromise = null;
+
+    return keycloak.token ?? null;
+  } catch (error) {
+    refreshPromise = null;
+
+    console.error("[keycloak-auth] refresh token falló:", error);
+
+    notifySessionExpired();
+
+    return null;
+  }
+}
+
 export function setKeycloakJsUrl(url) {
   keycloakJsUrl = url;
   console.log("[keycloak-auth] Keycloak JS URL:", keycloakJsUrl);
@@ -88,6 +134,21 @@ export async function initKeycloak() {
     clientId: keycloakConfig.clientId,
   });
 
+  keycloak.onTokenExpired = () => {
+    console.warn("[keycloak-auth] access token expirado, intentando refrescar...");
+
+    refreshTokenOrNotify();
+  };
+
+  keycloak.onAuthRefreshError = () => {
+    console.warn("[keycloak-auth] no fue posible refrescar el token");
+    notifySessionExpired();
+  };
+
+  keycloak.onAuthLogout = () => {
+    console.warn("[keycloak-auth] sesión cerrada");
+  };
+
   if (!initPromise) {
     initPromise = keycloak.init({
       onLoad: "check-sso",
@@ -107,6 +168,10 @@ export async function initKeycloak() {
 
   console.log("[keycloak-auth] init result authenticated:", authenticated);
   console.log("[keycloak-auth] token existe:", Boolean(keycloak.token));
+  console.log(
+    "[keycloak-auth] roles cliente:",
+    keycloak?.tokenParsed?.resource_access?.[keycloakConfig.clientId]?.roles || [],
+  );
 
   return authenticated === true;
 }
@@ -147,17 +212,11 @@ export async function getToken() {
   const kc = await ensureKeycloakInitialized();
 
   if (!kc.authenticated) {
+    notifySessionExpired();
     return null;
   }
 
-  try {
-    await kc.updateToken(30);
-  } catch (error) {
-    console.error("[keycloak-auth] error actualizando token:", error);
-    return null;
-  }
-
-  return kc.token ?? null;
+  return await refreshTokenOrNotify();
 }
 
 export function isAuthenticated() {
@@ -174,6 +233,24 @@ export function getUsername() {
 
 export function getUserId() {
   return keycloak?.tokenParsed?.sub || null;
+}
+
+export function getClientRoles() {
+  const clientId = keycloakConfig.clientId;
+
+  const roles =
+    keycloak?.tokenParsed?.resource_access?.[clientId]?.roles || [];
+
+  return JSON.stringify(roles);
+}
+
+export function hasClientRole(role) {
+  const clientId = keycloakConfig.clientId;
+
+  const roles =
+    keycloak?.tokenParsed?.resource_access?.[clientId]?.roles || [];
+
+  return roles.includes(role);
 }
 
 export function getParsedToken() {
@@ -207,6 +284,12 @@ extern "C" {
 
     #[wasm_bindgen(catch, js_name = getUserId)]
     fn js_get_user_id() -> Result<JsValue, JsValue>;
+
+    #[wasm_bindgen(catch, js_name = getClientRoles)]
+    fn js_get_client_roles() -> Result<JsValue, JsValue>;
+
+    #[wasm_bindgen(catch, js_name = hasClientRole)]
+    fn js_has_client_role(role: &str) -> Result<bool, JsValue>;
 }
 
 pub fn set_keycloak_js_url(url: &str) {
@@ -250,6 +333,21 @@ pub fn get_username() -> Option<String> {
 
 pub fn get_user_id() -> Option<String> {
     js_get_user_id().ok().and_then(|value| value.as_string())
+}
+
+pub fn get_client_roles() -> Vec<String> {
+    let Some(roles_json) = js_get_client_roles()
+        .ok()
+        .and_then(|value| value.as_string())
+    else {
+        return Vec::new();
+    };
+
+    serde_json::from_str::<Vec<String>>(&roles_json).unwrap_or_default()
+}
+
+pub fn has_client_role(role: &str) -> bool {
+    js_has_client_role(role).unwrap_or(false)
 }
 
 fn js_error_to_string(error: JsValue) -> String {

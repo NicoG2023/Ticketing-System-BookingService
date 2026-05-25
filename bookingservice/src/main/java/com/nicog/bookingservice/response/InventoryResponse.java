@@ -1,6 +1,5 @@
 package com.nicog.bookingservice.response;
 
-import java.math.BigDecimal;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,5 +15,5 @@ public class InventoryResponse {
     private String event;
     private Long capacity;
     private String venue;
-    private BigDecimal ticketPrice;
+    private Double ticketPrice;
 }

@@ -8,6 +8,7 @@ edition = "2021"
 
 [dependencies]
 dioxus = { version = "0.7.1", features = ["router"] }
+gloo-events = "0.3.0"
 gloo-net = "0.7.0"
 js-sys = "0.3.98"
 serde = { version = "1.0.228", features = ["derive"] }

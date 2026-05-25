@@ -216,3 +216,35 @@ pub async fn create_venue(request: CreateVenueRequest) -> Result<VenueInventoryR
         .await
         .map_err(|error| format!("Error leyendo la sede creada: {error}"))
 }
+
+pub async fn delete_event(event_id: u64) -> Result<(), String> {
+    let token = bearer_token().await?;
+
+    let response = Request::delete(&format!("{API_BASE}/inventory/event/{event_id}"))
+        .header("Authorization", &token)
+        .send()
+        .await
+        .map_err(|error| format!("Error eliminando el evento: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    Ok(())
+}
+
+pub async fn delete_venue(venue_id: u64) -> Result<(), String> {
+    let token = bearer_token().await?;
+
+    let response = Request::delete(&format!("{API_BASE}/inventory/venue/{venue_id}"))
+        .header("Authorization", &token)
+        .send()
+        .await
+        .map_err(|error| format!("Error eliminando la sede: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    Ok(())
+}

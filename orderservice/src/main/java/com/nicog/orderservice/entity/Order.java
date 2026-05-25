@@ -1,6 +1,5 @@
 package com.nicog.orderservice.entity;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -14,7 +13,7 @@ import lombok.NoArgsConstructor;
 public class Order {
 
     private String id;
-    private BigDecimal totalPrice;
+    private Double totalPrice;
     private Long ticketCount;
     private LocalDateTime placedAt;
     private String customerId;
