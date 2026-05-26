@@ -15,6 +15,15 @@ pub struct EventInventoryResponse {
 pub struct VenueInventoryResponse {
     pub venue_id: u64,
     pub venue_name: String,
+    pub address: String,
+    pub total_capacity: u64,
+}
+
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct UpdateVenueRequest {
+    pub name: String,
+    pub address: String,
     pub total_capacity: u64,
 }
 

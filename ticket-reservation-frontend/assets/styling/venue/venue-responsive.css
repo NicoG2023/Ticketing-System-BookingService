@@ -1,0 +1,41 @@
+@media (max-width: 1050px) {
+    .create-venue-form {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .primary-button {
+        grid-column: 1 / -1;
+    }
+}
+
+@media (max-width: 720px) {
+    .venue-page {
+        padding: 1rem;
+    }
+
+    .venue-header {
+        flex-direction: column;
+        border-radius: 22px;
+    }
+
+    .panel {
+        padding: 1rem;
+        border-radius: 20px;
+    }
+
+    .panel-header {
+        flex-direction: column;
+    }
+
+    .create-venue-form {
+        grid-template-columns: 1fr;
+    }
+
+    .button-row {
+        flex-direction: column;
+    }
+
+    .venue-grid {
+        grid-template-columns: 1fr;
+    }
+}

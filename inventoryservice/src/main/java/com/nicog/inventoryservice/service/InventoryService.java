@@ -5,6 +5,7 @@ import com.nicog.inventoryservice.entity.Venue;
 import com.nicog.inventoryservice.repository.FirebaseInventoryRepository;
 import com.nicog.inventoryservice.request.CreateEventRequest;
 import com.nicog.inventoryservice.request.CreateVenueRequest;
+import com.nicog.inventoryservice.request.UpdateVenueRequest;
 import com.nicog.inventoryservice.response.ConcurrentBookingSimulationResponse;
 import com.nicog.inventoryservice.response.EventInventoryResponse;
 import com.nicog.inventoryservice.response.VenueInventoryResponse;
@@ -66,6 +67,7 @@ public class InventoryService {
             return VenueInventoryResponse.builder()
                 .venueId(venue.getId())
                 .venueName(venue.getName())
+                .address(venue.getAddress())
                 .totalCapacity(venue.getTotalCapacity())
                 .build();
         } catch (Exception exception) {
@@ -358,6 +360,7 @@ public class InventoryService {
                     VenueInventoryResponse.builder()
                         .venueId(venue.getId())
                         .venueName(venue.getName())
+                        .address(venue.getAddress())
                         .totalCapacity(venue.getTotalCapacity())
                         .build()
                 );
@@ -390,6 +393,7 @@ public class InventoryService {
             return VenueInventoryResponse.builder()
                 .venueId(savedVenue.getId())
                 .venueName(savedVenue.getName())
+                .address(savedVenue.getAddress())
                 .totalCapacity(savedVenue.getTotalCapacity())
                 .build();
         } catch (Exception exception) {
@@ -478,6 +482,93 @@ public class InventoryService {
         } catch (Exception exception) {
             log.error("Error eliminando sede con id: {}", venueId, exception);
             throw new RuntimeException("No fue posible eliminar la sede");
+        }
+    }
+
+    public VenueInventoryResponse updateVenue(
+        final Long venueId,
+        final UpdateVenueRequest request
+    ) {
+        if (venueId == null) {
+            throw new IllegalArgumentException(
+                "El id de la sede es obligatorio"
+            );
+        }
+
+        validateUpdateVenueRequest(request);
+
+        try {
+            Venue existingVenue = firebaseInventoryRepository
+                .findVenueById(venueId)
+                .join();
+
+            List<Event> events = firebaseInventoryRepository
+                .findAllEvents()
+                .join();
+
+            boolean hasEventExceedingNewCapacity = events
+                .stream()
+                .filter(event -> venueId.equals(event.getVenueId()))
+                .anyMatch(
+                    event ->
+                        event.getTotalCapacity() != null &&
+                        event.getTotalCapacity() > request.getTotalCapacity()
+                );
+
+            if (hasEventExceedingNewCapacity) {
+                throw new IllegalArgumentException(
+                    "No se puede reducir la capacidad de la sede por debajo de la capacidad de eventos asociados"
+                );
+            }
+
+            existingVenue.setName(request.getName());
+            existingVenue.setAddress(request.getAddress());
+            existingVenue.setTotalCapacity(request.getTotalCapacity());
+
+            Venue updatedVenue = firebaseInventoryRepository
+                .saveVenue(existingVenue)
+                .join();
+
+            return VenueInventoryResponse.builder()
+                .venueId(updatedVenue.getId())
+                .venueName(updatedVenue.getName())
+                .address(updatedVenue.getAddress())
+                .totalCapacity(updatedVenue.getTotalCapacity())
+                .build();
+        } catch (IllegalArgumentException exception) {
+            throw exception;
+        } catch (Exception exception) {
+            log.error("Error actualizando sede con id: {}", venueId, exception);
+            throw new RuntimeException("No fue posible actualizar la sede");
+        }
+    }
+
+    private void validateUpdateVenueRequest(final UpdateVenueRequest request) {
+        if (request == null) {
+            throw new IllegalArgumentException(
+                "La solicitud no puede ser nula"
+            );
+        }
+
+        if (request.getName() == null || request.getName().isBlank()) {
+            throw new IllegalArgumentException(
+                "El nombre de la sede es obligatorio"
+            );
+        }
+
+        if (request.getAddress() == null || request.getAddress().isBlank()) {
+            throw new IllegalArgumentException(
+                "La dirección de la sede es obligatoria"
+            );
+        }
+
+        if (
+            request.getTotalCapacity() == null ||
+            request.getTotalCapacity() <= 0
+        ) {
+            throw new IllegalArgumentException(
+                "La capacidad total debe ser mayor a cero"
+            );
         }
     }
 }

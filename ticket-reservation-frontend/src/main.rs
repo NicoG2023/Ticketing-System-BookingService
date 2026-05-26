@@ -17,6 +17,7 @@ pub struct AuthState {
     pub authenticated: Signal<bool>,
     pub username: Signal<Option<String>>,
     pub user_id: Signal<Option<String>>,
+    pub roles: Signal<Vec<String>>,
     pub error: Signal<Option<String>>,
     pub login_in_progress: Signal<bool>,
     pub notice: Signal<Option<String>>,
@@ -33,6 +34,14 @@ impl AuthState {
 
     pub fn is_logged_in(&self) -> bool {
         (self.authenticated)()
+    }
+
+    pub fn has_role(&self, role: &str) -> bool {
+        (self.roles)().iter().any(|user_role| user_role == role)
+    }
+
+    pub fn is_admin(&self) -> bool {
+        self.has_role("admin")
     }
 }
 
@@ -63,9 +72,6 @@ const FAVICON: Asset = asset!("/assets/favicon.ico");
 const MAIN_CSS: Asset = asset!("/assets/styling/main.css");
 const TAILWIND_CSS: Asset = asset!("/assets/tailwind.css");
 const KEYCLOAK_JS: Asset = asset!("/assets/vendor/keycloak/keycloak.js");
-
-// Configuración de Keycloak.
-// Para futuros proyectos, normalmente solo cambias estos 3 valores.
 const KEYCLOAK_URL: &str = "http://localhost:8092";
 const KEYCLOAK_REALM: &str = "ticket-reservation";
 const KEYCLOAK_CLIENT_ID: &str = "ticket-frontend";
@@ -80,6 +86,7 @@ fn App() -> Element {
     let mut authenticated = use_signal(|| false);
     let mut username = use_signal(|| None::<String>);
     let mut user_id = use_signal(|| None::<String>);
+    let mut roles = use_signal(|| Vec::<String>::new());
     let mut error = use_signal(|| None::<String>);
     let login_in_progress = use_signal(|| false);
     let notice = use_signal(|| None::<String>);
@@ -91,6 +98,7 @@ fn App() -> Element {
         authenticated,
         username,
         user_id,
+        roles,
         error,
         login_in_progress,
         notice,
@@ -104,6 +112,7 @@ fn App() -> Element {
         let mut authenticated = authenticated;
         let mut username = username;
         let mut user_id = user_id;
+        let mut roles = roles;
         let mut error = error;
         let mut notice = notice;
 
@@ -114,6 +123,7 @@ fn App() -> Element {
                 authenticated.set(false);
                 username.set(None);
                 user_id.set(None);
+                roles.set(Vec::new());
                 error.set(None);
                 notice.set(Some(
                     "Tu sesión expiró. Inicia sesión de nuevo para continuar.".to_string(),
@@ -146,9 +156,11 @@ fn App() -> Element {
                     if is_authenticated {
                         username.set(auth::get_username());
                         user_id.set(auth::get_user_id());
+                        roles.set(auth::get_client_roles());
                     } else {
                         username.set(None);
                         user_id.set(None);
+                        roles.set(Vec::new());
                     }
 
                     error.set(None);
@@ -157,6 +169,7 @@ fn App() -> Element {
                     authenticated.set(false);
                     username.set(None);
                     user_id.set(None);
+                    roles.set(Vec::new());
                     error.set(Some(message));
                 }
             }

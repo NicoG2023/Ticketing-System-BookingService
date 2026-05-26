@@ -3,5 +3,7 @@
 //! component  to be used in our app.
 pub mod common;
 pub mod require_auth;
+pub mod require_role;
 
 pub use require_auth::RequireAuth;
+pub use require_role::RequireRole;

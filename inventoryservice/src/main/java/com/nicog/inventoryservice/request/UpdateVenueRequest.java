@@ -1,4 +1,4 @@
-package com.nicog.inventoryservice.response;
+package com.nicog.inventoryservice.request;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -9,10 +9,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class VenueInventoryResponse {
+public class UpdateVenueRequest {
 
-    private Long venueId;
-    private String venueName;
+    private String name;
     private String address;
     private Long totalCapacity;
 }

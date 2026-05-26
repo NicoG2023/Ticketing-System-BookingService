@@ -1,0 +1,79 @@
+.create-venue-form {
+    display: grid;
+    grid-template-columns: minmax(220px, 1.4fr) minmax(220px, 1.4fr) minmax(
+            130px,
+            0.8fr
+        ) auto;
+    gap: 0.9rem;
+    align-items: end;
+}
+
+.form-field {
+    display: grid;
+    gap: 0.45rem;
+}
+
+.form-field label {
+    color: #334155;
+    font-size: 0.8rem;
+    font-weight: 800;
+}
+
+.form-field input {
+    width: 100%;
+    box-sizing: border-box;
+    min-height: 2.75rem;
+    padding: 0.75rem 0.85rem;
+    border: 1px solid #dbe3ef;
+    border-radius: 14px;
+    background: #ffffff;
+    color: #0f172a;
+    font: inherit;
+    outline: none;
+    transition:
+        border-color 0.16s ease,
+        box-shadow 0.16s ease,
+        transform 0.16s ease;
+}
+
+.form-field input::placeholder {
+    color: #94a3b8;
+}
+
+.form-field input:focus {
+    border-color: #60a5fa;
+    box-shadow: 0 0 0 4px rgba(96, 165, 250, 0.18);
+}
+
+.primary-button {
+    min-height: 2.75rem;
+    padding: 0.75rem 1.05rem;
+    border: 1px solid #0f172a;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #111827, #020617);
+    color: #ffffff;
+    white-space: nowrap;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 850;
+    box-shadow: 0 12px 22px rgba(15, 23, 42, 0.18);
+    transition:
+        transform 0.14s ease,
+        box-shadow 0.14s ease,
+        opacity 0.14s ease,
+        background 0.14s ease,
+        border-color 0.14s ease;
+}
+
+.primary-button:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 16px 28px rgba(15, 23, 42, 0.22);
+}
+
+.primary-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}

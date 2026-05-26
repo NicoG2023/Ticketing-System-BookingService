@@ -18,24 +18,28 @@ pub fn Navbar() -> Element {
                 "Home"
             }
 
-            Link {
-                to: Route::Events {},
-                "Eventos"
+            if auth_state.is_logged_in() {
+                Link {
+                    to: Route::Events {},
+                    "Eventos"
+                }
+
+                Link {
+                    to: Route::Simulations {},
+                    "Simulaciones BD"
+                }
             }
 
-            Link {
-                to: Route::Inventory {},
-                "Inventario"
-            }
+            if auth_state.is_admin() {
+                Link {
+                    to: Route::Inventory {},
+                    "Inventario"
+                }
 
-            Link {
-                to: Route::Simulations {},
-                "Simulaciones BD"
-            }
-
-            Link {
-                to: Route::Venue {},
-                "Sedes"
+                Link {
+                    to: Route::Venue {},
+                    "Sedes"
+                }
             }
 
             AuthActions {}
@@ -115,11 +119,10 @@ fn AuthActions() -> Element {
                                         return;
                                     }
 
-                                    // Normalmente Keycloak redirige después del logout.
-                                    // Esto queda como fallback por si el redirect no ocurre.
                                     auth_state.authenticated.set(false);
                                     auth_state.username.set(None);
                                     auth_state.user_id.set(None);
+                                    auth_state.roles.set(Vec::new());
                                 });
                             },
                             "Cerrar sesión"
@@ -156,9 +159,6 @@ fn AuthActions() -> Element {
                             auth_state.error.set(Some(message));
                             auth_state.login_in_progress.set(false);
                         }
-
-                        // Si login funciona, la página redirige a Keycloak.
-                        // Por eso no ponemos login_in_progress en false aquí.
                     });
                 },
 

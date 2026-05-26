@@ -7,7 +7,6 @@ import com.nicog.bookingservice.repository.FirebaseCustomerRepository;
 import com.nicog.bookingservice.request.BookingRequest;
 import com.nicog.bookingservice.response.BookingResponse;
 import com.nicog.bookingservice.response.InventoryResponse;
-import java.math.BigDecimal;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.stereotype.Service;

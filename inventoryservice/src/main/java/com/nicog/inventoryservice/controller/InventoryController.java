@@ -2,6 +2,7 @@ package com.nicog.inventoryservice.controller;
 
 import com.nicog.inventoryservice.request.CreateEventRequest;
 import com.nicog.inventoryservice.request.CreateVenueRequest;
+import com.nicog.inventoryservice.request.UpdateVenueRequest;
 import com.nicog.inventoryservice.response.ConcurrentBookingSimulationResponse;
 import com.nicog.inventoryservice.response.EventInventoryResponse;
 import com.nicog.inventoryservice.response.VenueInventoryResponse;
@@ -114,5 +115,19 @@ public class InventoryController {
     public ResponseEntity<Void> deleteVenue(@PathVariable Long venueId) {
         inventoryService.deleteVenue(venueId);
         return ResponseEntity.noContent().build();
+    }
+
+    @PutMapping(
+        consumes = "application/json",
+        produces = "application/json",
+        path = "/inventory/venue/{venueId}"
+    )
+    public ResponseEntity<VenueInventoryResponse> updateVenue(
+        @PathVariable Long venueId,
+        @RequestBody UpdateVenueRequest request
+    ) {
+        return ResponseEntity.ok(
+            inventoryService.updateVenue(venueId, request)
+        );
     }
 }

@@ -3,7 +3,7 @@ use gloo_net::http::Request;
 use crate::auth;
 use crate::models::{
     BookingRequest, BookingResponse, ConcurrentBookingSimulationResponse, CreateEventRequest,
-    CreateVenueRequest, EventInventoryResponse, VenueInventoryResponse,
+    CreateVenueRequest, EventInventoryResponse, UpdateVenueRequest, VenueInventoryResponse,
 };
 
 const API_BASE: &str = "http://localhost:8091/api/v1";
@@ -215,6 +215,31 @@ pub async fn create_venue(request: CreateVenueRequest) -> Result<VenueInventoryR
         .json::<VenueInventoryResponse>()
         .await
         .map_err(|error| format!("Error leyendo la sede creada: {error}"))
+}
+
+pub async fn update_venue(
+    venue_id: u64,
+    request: UpdateVenueRequest,
+) -> Result<VenueInventoryResponse, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::put(&format!("{API_BASE}/inventory/venue/{venue_id}"))
+        .header("Authorization", &token)
+        .header("Content-Type", "application/json")
+        .json(&request)
+        .map_err(|error| format!("Error preparando la actualización de la sede: {error}"))?
+        .send()
+        .await
+        .map_err(|error| format!("Error actualizando la sede: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<VenueInventoryResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la sede actualizada: {error}"))
 }
 
 pub async fn delete_event(event_id: u64) -> Result<(), String> {

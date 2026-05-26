@@ -2,7 +2,7 @@ use dioxus::prelude::*;
 
 use crate::api;
 use crate::components::common::{EmptyState, LoadingState};
-use crate::components::RequireAuth;
+use crate::components::RequireRole;
 use crate::models::{EventInventoryResponse, VenueInventoryResponse};
 
 use super::create_event_form::CreateEventForm;
@@ -20,7 +20,8 @@ const INVENTORY_RESPONSIVE_CSS: Asset =
 #[component]
 pub fn Inventory() -> Element {
     rsx! {
-        RequireAuth {
+        RequireRole {
+            role: "admin".to_string(),
             InventoryContent {}
         }
     }

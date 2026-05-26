@@ -8,7 +8,6 @@ import org.springframework.cloud.gateway.server.mvc.handler.GatewayRouterFunctio
 import org.springframework.cloud.gateway.server.mvc.handler.HandlerFunctions;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.http.HttpMethod;
 import org.springframework.web.servlet.function.RequestPredicates;
 import org.springframework.web.servlet.function.RouterFunction;
 import org.springframework.web.servlet.function.ServerResponse;
@@ -23,79 +22,69 @@ public class InventoryServiceRoutes {
     public RouterFunction<ServerResponse> inventoryRoutes() {
         return GatewayRouterFunctions.route("inventory-service")
 
-            // Liberar inventario / compensación
+            // Eventos - lectura
             .route(
-                RequestPredicates.path(
+                RequestPredicates.GET("/api/v1/inventory/events"),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.GET("/api/v1/inventory/event/{eventId}"),
+                HandlerFunctions.http()
+            )
+
+            // Eventos - administración
+            .route(
+                RequestPredicates.POST("/api/v1/inventory/events"),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.DELETE("/api/v1/inventory/event/{eventId}"),
+                HandlerFunctions.http()
+            )
+
+            // Inventario de eventos
+            .route(
+                RequestPredicates.PUT(
+                    "/api/v1/inventory/event/{eventId}/capacity/{capacity}"
+                ),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.PUT(
                     "/api/v1/inventory/event/{eventId}/capacity/release/{ticketsReleased}"
                 ),
                 HandlerFunctions.http()
             )
 
-            // Descontar inventario
+            // Simulación
             .route(
-                RequestPredicates.path(
-                    "/api/v1/inventory/event/{eventId}/capacity/{capacity}"
-                ),
-                HandlerFunctions.http()
-            )
-
-            // Consultar todas las sedes
-            .route(
-                RequestPredicates.path("/api/v1/inventory/venues"),
-                HandlerFunctions.http()
-            )
-
-            // Consultar sede
-            .route(
-                RequestPredicates.path("/api/v1/inventory/venue/{venueId}"),
-                HandlerFunctions.http()
-            )
-
-            // Consultar evento específico
-            .route(
-                RequestPredicates.path("/api/v1/inventory/event/{eventId}"),
-                HandlerFunctions.http()
-            )
-
-            // Consultar todos los eventos
-            .route(
-                RequestPredicates.path("/api/v1/inventory/events"),
-                HandlerFunctions.http()
-            )
-
-            // Simular reserva concurrente para simulacion de Lost Update
-            .route(
-                RequestPredicates.path(
+                RequestPredicates.GET(
                     "/api/v1/inventory/event/{eventId}/simulate-concurrent-booking"
                 ),
                 HandlerFunctions.http()
             )
 
-            // Ruta para crear un evento
+            // Sedes - lectura
             .route(
-                RequestPredicates.path("/api/v1/inventory/events"),
+                RequestPredicates.GET("/api/v1/inventory/venues"),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.GET("/api/v1/inventory/venue/{venueId}"),
                 HandlerFunctions.http()
             )
 
-            // Ruta para crear una sede
+            // Sedes - administración
             .route(
-                RequestPredicates.path("/api/v1/inventory/venues"),
+                RequestPredicates.POST("/api/v1/inventory/venues"),
                 HandlerFunctions.http()
             )
-
-            // Eliminar evento
             .route(
-                RequestPredicates.path("/api/v1/inventory/event/{eventId}").and(
-                    RequestPredicates.method(HttpMethod.DELETE)
-                ),
+                RequestPredicates.PUT("/api/v1/inventory/venue/{venueId}"),
                 HandlerFunctions.http()
             )
-
-            // Eliminar sede
             .route(
-                RequestPredicates.path("/api/v1/inventory/venue/{venueId}").and(
-                    RequestPredicates.method(HttpMethod.DELETE)
-                ),
+                RequestPredicates.DELETE("/api/v1/inventory/venue/{venueId}"),
                 HandlerFunctions.http()
             )
 

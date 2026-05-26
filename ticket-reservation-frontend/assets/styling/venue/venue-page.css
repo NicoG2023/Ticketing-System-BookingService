@@ -1,0 +1,195 @@
+.venue-page {
+    min-height: 100vh;
+    padding: 2rem;
+    background:
+        radial-gradient(
+            circle at top left,
+            rgba(59, 130, 246, 0.16),
+            transparent 32rem
+        ),
+        radial-gradient(
+            circle at top right,
+            rgba(16, 185, 129, 0.12),
+            transparent 28rem
+        ),
+        linear-gradient(180deg, #f8fafc 0%, #eef2f7 100%);
+    color: #0f172a;
+}
+
+.venue-header {
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1.5rem;
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+    overflow: hidden;
+    border: 1px solid rgba(148, 163, 184, 0.25);
+    border-radius: 28px;
+    background:
+        linear-gradient(135deg, rgba(15, 23, 42, 0.96), rgba(30, 41, 59, 0.94)),
+        #111827;
+    box-shadow: 0 24px 60px rgba(15, 23, 42, 0.18);
+}
+
+.venue-header::after {
+    content: "";
+    position: absolute;
+    width: 18rem;
+    height: 18rem;
+    right: -6rem;
+    top: -8rem;
+    border-radius: 999px;
+    background: rgba(59, 130, 246, 0.28);
+    filter: blur(6px);
+}
+
+.venue-header__content {
+    position: relative;
+    z-index: 1;
+    max-width: 760px;
+}
+
+.eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    margin-bottom: 0.75rem;
+    padding: 0.35rem 0.7rem;
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #bfdbfe;
+    font-size: 0.72rem;
+    font-weight: 800;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.venue-header h1 {
+    margin: 0;
+    color: #ffffff;
+    font-size: clamp(2rem, 4vw, 3.4rem);
+    line-height: 0.95;
+    letter-spacing: -0.06em;
+}
+
+.venue-header p {
+    max-width: 660px;
+    margin: 0.8rem 0 0;
+    color: #cbd5e1;
+    font-size: 1rem;
+    line-height: 1.6;
+}
+
+.panel {
+    position: relative;
+    margin-bottom: 1.5rem;
+    padding: 1.25rem;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 24px;
+    background: rgba(255, 255, 255, 0.88);
+    box-shadow:
+        0 18px 45px rgba(15, 23, 42, 0.07),
+        inset 0 1px 0 rgba(255, 255, 255, 0.85);
+    backdrop-filter: blur(14px);
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 1rem;
+    margin-bottom: 1.15rem;
+}
+
+.panel-header h2 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.08rem;
+    letter-spacing: -0.035em;
+}
+
+.panel-header p {
+    margin: 0.35rem 0 0;
+    color: #64748b;
+    font-size: 0.92rem;
+    line-height: 1.45;
+}
+
+.count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 2rem;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 999px;
+    background: #f8fafc;
+    color: #334155;
+    font-size: 0.78rem;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.secondary-button {
+    position: relative;
+    z-index: 1;
+    min-height: 2.75rem;
+    padding: 0.75rem 1.05rem;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.1);
+    color: #ffffff;
+    white-space: nowrap;
+    cursor: pointer;
+    font: inherit;
+    font-size: 0.88rem;
+    font-weight: 850;
+    transition:
+        transform 0.14s ease,
+        box-shadow 0.14s ease,
+        opacity 0.14s ease,
+        background 0.14s ease,
+        border-color 0.14s ease;
+}
+
+.secondary-button:hover {
+    transform: translateY(-1px);
+    background: rgba(255, 255, 255, 0.16);
+}
+
+.alert {
+    margin: 1rem 0;
+    padding: 0.95rem 1rem;
+    border-radius: 16px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    box-shadow: 0 12px 24px rgba(15, 23, 42, 0.04);
+}
+
+.alert-error {
+    background: #fef2f2;
+    color: #991b1b;
+    border: 1px solid #fecaca;
+}
+
+.alert-success {
+    background: #f0fdf4;
+    color: #166534;
+    border: 1px solid #bbf7d0;
+}
+
+.button-row {
+    display: flex;
+    gap: 0.55rem;
+}
+
+button:disabled,
+.secondary-button:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
