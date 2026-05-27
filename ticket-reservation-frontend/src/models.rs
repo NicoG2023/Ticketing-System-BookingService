@@ -30,7 +30,6 @@ pub struct UpdateVenueRequest {
 #[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct BookingRequest {
-    pub user_id: String,
     pub event_id: u64,
     pub ticket_count: u64,
 }
@@ -42,17 +41,6 @@ pub struct BookingResponse {
     pub event_id: u64,
     pub ticket_count: u64,
     pub total_price: f64,
-}
-
-#[derive(Debug, Clone, Deserialize, PartialEq)]
-#[serde(rename_all = "camelCase")]
-pub struct ConcurrentBookingSimulationResponse {
-    pub event_id: u64,
-    pub initial_capacity: u64,
-    pub final_capacity: u64,
-    pub request_a_status: String,
-    pub request_b_status: String,
-    pub conclusion: String,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -70,4 +58,20 @@ pub struct CreateVenueRequest {
     pub name: String,
     pub address: String,
     pub total_capacity: u64,
+}
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct LostUpdateSimulationResponse {
+    pub event_id: u64,
+    pub initial_capacity: u64,
+    pub request_a_calculated_capacity: u64,
+    pub request_b_calculated_capacity: u64,
+    pub final_capacity: u64,
+    pub expected_capacity: u64,
+    pub lost_update_occurred: bool,
+    pub request_a_status: String,
+    pub request_b_status: String,
+    pub explanation: String,
+    pub control: String,
 }

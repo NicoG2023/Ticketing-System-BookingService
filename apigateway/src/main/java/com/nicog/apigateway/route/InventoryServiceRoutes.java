@@ -59,7 +59,7 @@ public class InventoryServiceRoutes {
             // Simulación
             .route(
                 RequestPredicates.GET(
-                    "/api/v1/inventory/event/{eventId}/simulate-concurrent-booking"
+                    "/api/v1/events/{eventId}/simulations/lost-update"
                 ),
                 HandlerFunctions.http()
             )

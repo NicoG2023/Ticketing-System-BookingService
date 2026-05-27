@@ -3,8 +3,8 @@ package com.nicog.inventoryservice.controller;
 import com.nicog.inventoryservice.request.CreateEventRequest;
 import com.nicog.inventoryservice.request.CreateVenueRequest;
 import com.nicog.inventoryservice.request.UpdateVenueRequest;
-import com.nicog.inventoryservice.response.ConcurrentBookingSimulationResponse;
 import com.nicog.inventoryservice.response.EventInventoryResponse;
+import com.nicog.inventoryservice.response.LostUpdateSimulationResponse;
 import com.nicog.inventoryservice.response.VenueInventoryResponse;
 import com.nicog.inventoryservice.service.InventoryService;
 import java.util.List;
@@ -67,13 +67,11 @@ public class InventoryController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/inventory/event/{eventId}/simulate-concurrent-booking")
-    public ResponseEntity<
-        ConcurrentBookingSimulationResponse
-    > simulateConcurrentBooking(@PathVariable Long eventId) {
-        return ResponseEntity.ok(
-            inventoryService.simulateConcurrentBooking(eventId)
-        );
+    @GetMapping("/events/{eventId}/simulations/lost-update")
+    public ResponseEntity<LostUpdateSimulationResponse> simulateLostUpdate(
+        @PathVariable Long eventId
+    ) {
+        return ResponseEntity.ok(inventoryService.simulateLostUpdate(eventId));
     }
 
     @PostMapping(

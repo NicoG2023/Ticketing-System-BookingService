@@ -2,8 +2,9 @@ use gloo_net::http::Request;
 
 use crate::auth;
 use crate::models::{
-    BookingRequest, BookingResponse, ConcurrentBookingSimulationResponse, CreateEventRequest,
-    CreateVenueRequest, EventInventoryResponse, UpdateVenueRequest, VenueInventoryResponse,
+    BookingRequest, BookingResponse, CreateEventRequest, CreateVenueRequest,
+    EventInventoryResponse, LostUpdateSimulationResponse, UpdateVenueRequest,
+    VenueInventoryResponse,
 };
 
 const API_BASE: &str = "http://localhost:8091/api/v1";
@@ -93,29 +94,6 @@ pub async fn create_booking(request: BookingRequest) -> Result<BookingResponse, 
         .json::<BookingResponse>()
         .await
         .map_err(|error| format!("Error leyendo la respuesta de la reserva: {error}"))
-}
-
-pub async fn simulate_concurrent_booking(
-    event_id: u64,
-) -> Result<ConcurrentBookingSimulationResponse, String> {
-    let token = bearer_token().await?;
-
-    let response = Request::get(&format!(
-        "{API_BASE}/inventory/event/{event_id}/simulate-concurrent-booking"
-    ))
-    .header("Authorization", &token)
-    .send()
-    .await
-    .map_err(|error| format!("Error ejecutando simulación: {error}"))?;
-
-    if !response.ok() {
-        return Err(format!("Error del servidor: {}", response.status()));
-    }
-
-    response
-        .json::<ConcurrentBookingSimulationResponse>()
-        .await
-        .map_err(|error| format!("Error leyendo la simulación: {error}"))
 }
 
 pub async fn decrease_event_capacity(event_id: u64, capacity: u64) -> Result<(), String> {
@@ -272,4 +250,25 @@ pub async fn delete_venue(venue_id: u64) -> Result<(), String> {
     }
 
     Ok(())
+}
+
+pub async fn simulate_lost_update(event_id: u64) -> Result<LostUpdateSimulationResponse, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::get(&format!(
+        "{API_BASE}/events/{event_id}/simulations/lost-update"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error simulando Lost Update: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<LostUpdateSimulationResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la simulación Lost Update: {error}"))
 }

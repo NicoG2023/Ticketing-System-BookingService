@@ -68,6 +68,8 @@ pub fn EventCard(
 
             BookingForm {
                 event_id: event.event_id,
+                event_name: event.event.clone(),
+                ticket_price: event.ticket_price,
                 available_capacity: event.capacity,
                 on_success,
                 on_error,

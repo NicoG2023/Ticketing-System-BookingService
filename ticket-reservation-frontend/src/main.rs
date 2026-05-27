@@ -9,7 +9,7 @@ mod components;
 mod models;
 mod views;
 
-use views::{Blog, Events, Home, Inventory, Navbar, Simulations, Venue};
+use views::{Blog, Events, Home, Inventory, Navbar, Simulation, Venue};
 
 #[derive(Clone)]
 pub struct AuthState {
@@ -59,7 +59,7 @@ pub enum Route {
         Events {},
 
         #[route("/simulations")]
-        Simulations {},
+        Simulation {},
 
         #[route("/inventory")]
         Inventory {},

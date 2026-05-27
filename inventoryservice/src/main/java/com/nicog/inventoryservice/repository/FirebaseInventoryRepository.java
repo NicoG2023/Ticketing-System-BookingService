@@ -136,65 +136,114 @@ public class FirebaseInventoryRepository {
     ) {
         CompletableFuture<Void> future = new CompletableFuture<>();
 
-        DatabaseReference eventRef = eventsRef.child(String.valueOf(eventId));
+        findEventById(eventId)
+            .thenAccept(existingEvent -> {
+                Long existingCapacity = existingEvent.getLeftCapacity();
 
-        eventRef.runTransaction(
-            new Transaction.Handler() {
-                @Override
-                public Transaction.Result doTransaction(
-                    MutableData currentData
-                ) {
-                    Event event = currentData.getValue(Event.class);
-
-                    if (event == null) {
-                        return Transaction.abort();
-                    }
-
-                    Long currentCapacity = event.getLeftCapacity();
-
-                    if (
-                        currentCapacity == null ||
-                        currentCapacity < ticketsBooked
-                    ) {
-                        return Transaction.abort();
-                    }
-
-                    event.setLeftCapacity(currentCapacity - ticketsBooked);
-                    currentData.setValue(event);
-
-                    return Transaction.success(currentData);
+                if (existingCapacity == null) {
+                    future.completeExceptionally(
+                        new RuntimeException(
+                            "El evento no tiene capacidad disponible registrada: " +
+                                eventId
+                        )
+                    );
+                    return;
                 }
 
-                @Override
-                public void onComplete(
-                    DatabaseError error,
-                    boolean committed,
-                    DataSnapshot currentData
-                ) {
-                    if (error != null) {
-                        future.completeExceptionally(
-                            new RuntimeException(
-                                "Error actualizando inventario: " +
-                                    error.getMessage()
-                            )
-                        );
-                        return;
-                    }
-
-                    if (!committed) {
-                        future.completeExceptionally(
-                            new RuntimeException(
-                                "No hay capacidad suficiente para el evento: " +
-                                    eventId
-                            )
-                        );
-                        return;
-                    }
-
-                    future.complete(null);
+                if (existingCapacity < ticketsBooked) {
+                    future.completeExceptionally(
+                        new RuntimeException(
+                            "No hay capacidad suficiente para el evento: " +
+                                eventId +
+                                ". Capacidad actual: " +
+                                existingCapacity +
+                                ", tickets solicitados: " +
+                                ticketsBooked
+                        )
+                    );
+                    return;
                 }
-            }
-        );
+
+                DatabaseReference eventRef = eventsRef.child(
+                    String.valueOf(eventId)
+                );
+
+                eventRef.runTransaction(
+                    new Transaction.Handler() {
+                        @Override
+                        public Transaction.Result doTransaction(
+                            MutableData currentData
+                        ) {
+                            Event event = currentData.getValue(Event.class);
+
+                            if (event == null) {
+                                event = existingEvent;
+                            }
+
+                            Long currentCapacity = event.getLeftCapacity();
+
+                            if (currentCapacity == null) {
+                                return Transaction.abort();
+                            }
+
+                            if (currentCapacity < ticketsBooked) {
+                                return Transaction.abort();
+                            }
+
+                            event.setLeftCapacity(
+                                currentCapacity - ticketsBooked
+                            );
+                            currentData.setValue(event);
+
+                            return Transaction.success(currentData);
+                        }
+
+                        @Override
+                        public void onComplete(
+                            DatabaseError error,
+                            boolean committed,
+                            DataSnapshot currentData
+                        ) {
+                            if (error != null) {
+                                future.completeExceptionally(
+                                    new RuntimeException(
+                                        "Error actualizando inventario: " +
+                                            error.getMessage()
+                                    )
+                                );
+                                return;
+                            }
+
+                            if (!committed) {
+                                Event event = currentData.getValue(Event.class);
+
+                                Long currentCapacity =
+                                    event != null
+                                        ? event.getLeftCapacity()
+                                        : null;
+
+                                future.completeExceptionally(
+                                    new RuntimeException(
+                                        "No hay capacidad suficiente para el evento: " +
+                                            eventId +
+                                            ". Capacidad actual: " +
+                                            currentCapacity +
+                                            ", tickets solicitados: " +
+                                            ticketsBooked
+                                    )
+                                );
+                                return;
+                            }
+
+                            future.complete(null);
+                        }
+                    }
+                );
+            })
+            .exceptionally(exception -> {
+                future.completeExceptionally(exception);
+                return null;
+            });
 
         return future;
     }
@@ -205,71 +254,104 @@ public class FirebaseInventoryRepository {
     ) {
         CompletableFuture<Void> future = new CompletableFuture<>();
 
-        DatabaseReference eventRef = eventsRef.child(String.valueOf(eventId));
+        findEventById(eventId)
+            .thenAccept(existingEvent -> {
+                Long existingCapacity = existingEvent.getLeftCapacity();
 
-        eventRef.runTransaction(
-            new Transaction.Handler() {
-                @Override
-                public Transaction.Result doTransaction(
-                    MutableData currentData
-                ) {
-                    Event event = currentData.getValue(Event.class);
-
-                    if (event == null) {
-                        return Transaction.abort();
-                    }
-
-                    Long currentCapacity = event.getLeftCapacity();
-
-                    if (currentCapacity == null) {
-                        return Transaction.abort();
-                    }
-
-                    Long newCapacity = currentCapacity + ticketsReleased;
-
-                    if (
-                        event.getTotalCapacity() != null &&
-                        newCapacity > event.getTotalCapacity()
-                    ) {
-                        return Transaction.abort();
-                    }
-
-                    event.setLeftCapacity(newCapacity);
-                    currentData.setValue(event);
-
-                    return Transaction.success(currentData);
+                if (existingCapacity == null) {
+                    future.completeExceptionally(
+                        new RuntimeException(
+                            "El evento no tiene capacidad registrada: " +
+                                eventId
+                        )
+                    );
+                    return;
                 }
 
-                @Override
-                public void onComplete(
-                    DatabaseError error,
-                    boolean committed,
-                    DataSnapshot currentData
-                ) {
-                    if (error != null) {
-                        future.completeExceptionally(
-                            new RuntimeException(
-                                "Error compensando inventario: " +
-                                    error.getMessage()
-                            )
-                        );
-                        return;
-                    }
+                DatabaseReference eventRef = eventsRef.child(
+                    String.valueOf(eventId)
+                );
 
-                    if (!committed) {
-                        future.completeExceptionally(
-                            new RuntimeException(
-                                "No fue posible compensar inventario para evento: " +
-                                    eventId
-                            )
-                        );
-                        return;
-                    }
+                eventRef.runTransaction(
+                    new Transaction.Handler() {
+                        @Override
+                        public Transaction.Result doTransaction(
+                            MutableData currentData
+                        ) {
+                            Event event = currentData.getValue(Event.class);
 
-                    future.complete(null);
-                }
-            }
-        );
+                            if (event == null) {
+                                event = existingEvent;
+                            }
+
+                            Long currentCapacity = event.getLeftCapacity();
+                            Long maxCapacity = event.getTotalCapacity();
+
+                            if (currentCapacity == null) {
+                                return Transaction.abort();
+                            }
+
+                            Long newCapacity =
+                                currentCapacity + ticketsReleased;
+
+                            if (
+                                maxCapacity != null && newCapacity > maxCapacity
+                            ) {
+                                return Transaction.abort();
+                            }
+
+                            event.setLeftCapacity(newCapacity);
+                            currentData.setValue(event);
+
+                            return Transaction.success(currentData);
+                        }
+
+                        @Override
+                        public void onComplete(
+                            DatabaseError error,
+                            boolean committed,
+                            DataSnapshot currentData
+                        ) {
+                            if (error != null) {
+                                future.completeExceptionally(
+                                    new RuntimeException(
+                                        "Error compensando inventario: " +
+                                            error.getMessage()
+                                    )
+                                );
+                                return;
+                            }
+
+                            if (!committed) {
+                                Event event = currentData.getValue(Event.class);
+
+                                Long currentCapacity =
+                                    event != null
+                                        ? event.getLeftCapacity()
+                                        : null;
+
+                                future.completeExceptionally(
+                                    new RuntimeException(
+                                        "No fue posible compensar inventario para evento: " +
+                                            eventId +
+                                            ". Capacidad actual: " +
+                                            currentCapacity +
+                                            ", tickets a liberar: " +
+                                            ticketsReleased
+                                    )
+                                );
+                                return;
+                            }
+
+                            future.complete(null);
+                        }
+                    }
+                );
+            })
+            .exceptionally(exception -> {
+                future.completeExceptionally(exception);
+                return null;
+            });
 
         return future;
     }
@@ -452,6 +534,32 @@ public class FirebaseInventoryRepository {
                 }
             }
         );
+
+        return future;
+    }
+
+    public CompletableFuture<Void> unsafeSetLeftCapacity(
+        Long eventId,
+        Long newCapacity
+    ) {
+        CompletableFuture<Void> future = new CompletableFuture<>();
+
+        eventsRef
+            .child(String.valueOf(eventId))
+            .child("leftCapacity")
+            .setValue(newCapacity, (databaseError, databaseReference) -> {
+                if (databaseError != null) {
+                    future.completeExceptionally(
+                        new RuntimeException(
+                            "Error actualizando capacidad sin transacción: " +
+                                databaseError.getMessage()
+                        )
+                    );
+                    return;
+                }
+
+                future.complete(null);
+            });
 
         return future;
     }

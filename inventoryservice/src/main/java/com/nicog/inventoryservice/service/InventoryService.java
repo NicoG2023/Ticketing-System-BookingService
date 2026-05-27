@@ -6,8 +6,8 @@ import com.nicog.inventoryservice.repository.FirebaseInventoryRepository;
 import com.nicog.inventoryservice.request.CreateEventRequest;
 import com.nicog.inventoryservice.request.CreateVenueRequest;
 import com.nicog.inventoryservice.request.UpdateVenueRequest;
-import com.nicog.inventoryservice.response.ConcurrentBookingSimulationResponse;
 import com.nicog.inventoryservice.response.EventInventoryResponse;
+import com.nicog.inventoryservice.response.LostUpdateSimulationResponse;
 import com.nicog.inventoryservice.response.VenueInventoryResponse;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,6 +36,15 @@ public class InventoryService {
             List<EventInventoryResponse> response = new ArrayList<>();
 
             for (Event event : events) {
+                if (event.getLeftCapacity() == null) {
+                    log.warn(
+                        "Evento con leftCapacity null. eventId={}, eventName={}",
+                        event.getId(),
+                        event.getName()
+                    );
+                    continue;
+                }
+
                 Venue venue = firebaseInventoryRepository
                     .findVenueById(event.getVenueId())
                     .join();
@@ -116,14 +125,31 @@ public class InventoryService {
         }
 
         try {
+            Event eventBefore = firebaseInventoryRepository
+                .findEventById(eventId)
+                .join();
+
+            log.info(
+                "Trying to decrease capacity. eventId={}, ticketsBooked={}, currentLeftCapacity={}, totalCapacity={}",
+                eventId,
+                ticketsBooked,
+                eventBefore.getLeftCapacity(),
+                eventBefore.getTotalCapacity()
+            );
+
             firebaseInventoryRepository
                 .decreaseEventCapacity(eventId, ticketsBooked)
                 .join();
 
+            Event eventAfter = firebaseInventoryRepository
+                .findEventById(eventId)
+                .join();
+
             log.info(
-                "Updated event capacity for event id: {} with tickets booked: {}",
+                "Capacity updated. eventId={}, previousLeftCapacity={}, newLeftCapacity={}",
                 eventId,
-                ticketsBooked
+                eventBefore.getLeftCapacity(),
+                eventAfter.getLeftCapacity()
             );
         } catch (Exception exception) {
             log.error(
@@ -134,7 +160,9 @@ public class InventoryService {
             );
 
             throw new RuntimeException(
-                "No fue posible actualizar la capacidad del evento"
+                "No fue posible actualizar la capacidad del evento: " +
+                    exception.getMessage(),
+                exception
             );
         }
     }
@@ -173,9 +201,7 @@ public class InventoryService {
         }
     }
 
-    public ConcurrentBookingSimulationResponse simulateConcurrentBooking(
-        final Long eventId
-    ) {
+    public LostUpdateSimulationResponse simulateLostUpdate(final Long eventId) {
         final Long ticketsToBook = 1L;
 
         try {
@@ -185,14 +211,35 @@ public class InventoryService {
 
             Long initialCapacity = eventBefore.getLeftCapacity();
 
+            if (initialCapacity == null) {
+                throw new RuntimeException(
+                    "El evento no tiene capacidad disponible registrada"
+                );
+            }
+
             CompletableFuture<String> requestA = CompletableFuture.supplyAsync(
                 () -> {
                     try {
-                        firebaseInventoryRepository
-                            .decreaseEventCapacity(eventId, ticketsToBook)
+                        Event eventReadByA = firebaseInventoryRepository
+                            .findEventById(eventId)
                             .join();
 
-                        return "SUCCESS";
+                        Long capacityReadByA = eventReadByA.getLeftCapacity();
+
+                        Thread.sleep(1000);
+
+                        Long newCapacityA = capacityReadByA - ticketsToBook;
+
+                        firebaseInventoryRepository
+                            .unsafeSetLeftCapacity(eventId, newCapacityA)
+                            .join();
+
+                        return (
+                            "SUCCESS: A leyó " +
+                            capacityReadByA +
+                            " y guardó " +
+                            newCapacityA
+                        );
                     } catch (Exception exception) {
                         return "FAILED: " + exception.getMessage();
                     }
@@ -202,11 +249,26 @@ public class InventoryService {
             CompletableFuture<String> requestB = CompletableFuture.supplyAsync(
                 () -> {
                     try {
-                        firebaseInventoryRepository
-                            .decreaseEventCapacity(eventId, ticketsToBook)
+                        Event eventReadByB = firebaseInventoryRepository
+                            .findEventById(eventId)
                             .join();
 
-                        return "SUCCESS";
+                        Long capacityReadByB = eventReadByB.getLeftCapacity();
+
+                        Thread.sleep(1000);
+
+                        Long newCapacityB = capacityReadByB - ticketsToBook;
+
+                        firebaseInventoryRepository
+                            .unsafeSetLeftCapacity(eventId, newCapacityB)
+                            .join();
+
+                        return (
+                            "SUCCESS: B leyó " +
+                            capacityReadByB +
+                            " y guardó " +
+                            newCapacityB
+                        );
                     } catch (Exception exception) {
                         return "FAILED: " + exception.getMessage();
                     }
@@ -221,23 +283,39 @@ public class InventoryService {
 
             Long finalCapacity = eventAfter.getLeftCapacity();
 
-            String requestAStatus = requestA.join();
-            String requestBStatus = requestB.join();
+            firebaseInventoryRepository
+                .unsafeSetLeftCapacity(eventId, finalCapacity)
+                .join();
 
-            return ConcurrentBookingSimulationResponse.builder()
+            Long expectedCapacity = initialCapacity - 2;
+
+            boolean lostUpdateOccurred = !expectedCapacity.equals(
+                finalCapacity
+            );
+
+            return LostUpdateSimulationResponse.builder()
                 .eventId(eventId)
                 .initialCapacity(initialCapacity)
+                .requestACalculatedCapacity(initialCapacity - ticketsToBook)
+                .requestBCalculatedCapacity(initialCapacity - ticketsToBook)
                 .finalCapacity(finalCapacity)
-                .requestAStatus(requestAStatus)
-                .requestBStatus(requestBStatus)
-                .conclusion(
-                    "La simulación ejecutó dos reservas concurrentes. " +
-                        "Gracias a la transacción de Firebase, no se permite que la capacidad quede negativa."
+                .expectedCapacity(expectedCapacity)
+                .lostUpdateOccurred(lostUpdateOccurred)
+                .requestAStatus(requestA.join())
+                .requestBStatus(requestB.join())
+                .explanation(
+                    "Dos reservas concurrentes leyeron la misma capacidad inicial. " +
+                        "Ambas calcularon la nueva capacidad usando ese mismo valor y luego escribieron el resultado. " +
+                        "Como no se usó transacción, una actualización sobrescribió a la otra."
+                )
+                .control(
+                    "El problema se controla usando transacciones en Firebase, como en decreaseEventCapacity, " +
+                        "donde la lectura y escritura se ejecutan como una operación atómica."
                 )
                 .build();
         } catch (Exception exception) {
             throw new RuntimeException(
-                "No fue posible ejecutar la simulación de concurrencia",
+                "No fue posible simular Lost Update",
                 exception
             );
         }

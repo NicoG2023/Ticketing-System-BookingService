@@ -25,7 +25,7 @@ pub fn Navbar() -> Element {
                 }
 
                 Link {
-                    to: Route::Simulations {},
+                    to: Route::Simulation {},
                     "Simulaciones BD"
                 }
             }

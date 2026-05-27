@@ -67,11 +67,11 @@ public class OrderService {
 
     private Order createOrder(BookingEvent bookingEvent) {
         return Order.builder()
-            .customerId(bookingEvent.getUserId())
+            .userId(bookingEvent.getUserId())
             .eventId(bookingEvent.getEventId())
             .ticketCount(bookingEvent.getTicketCount())
             .totalPrice(bookingEvent.getTotalPrice())
-            .placedAt(LocalDateTime.now())
+            .placedAt(LocalDateTime.now().toString())
             .status("CONFIRMED")
             .build();
     }
@@ -88,7 +88,7 @@ public class OrderService {
             bookingEvent.getUserId().isBlank()
         ) {
             throw new IllegalArgumentException(
-                "El id del cliente es obligatorio"
+                "El id del usuario es obligatorio"
             );
         }
 

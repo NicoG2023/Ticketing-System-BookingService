@@ -1,9 +1,7 @@
 package com.nicog.bookingservice.service;
 
 import com.nicog.bookingservice.client.InventoryServiceClient;
-import com.nicog.bookingservice.entity.Customer;
 import com.nicog.bookingservice.event.BookingEvent;
-import com.nicog.bookingservice.repository.FirebaseCustomerRepository;
 import com.nicog.bookingservice.request.BookingRequest;
 import com.nicog.bookingservice.response.BookingResponse;
 import com.nicog.bookingservice.response.InventoryResponse;
@@ -15,28 +13,32 @@ import org.springframework.stereotype.Service;
 @Slf4j
 public class BookingService {
 
-    private final FirebaseCustomerRepository customerRepository;
     private final InventoryServiceClient inventoryServiceClient;
     private final KafkaTemplate<String, BookingEvent> kafkaTemplate;
 
     public BookingService(
-        final FirebaseCustomerRepository customerRepository,
         final InventoryServiceClient inventoryServiceClient,
         final KafkaTemplate<String, BookingEvent> kafkaTemplate
     ) {
-        this.customerRepository = customerRepository;
         this.inventoryServiceClient = inventoryServiceClient;
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public BookingResponse createBooking(final BookingRequest request) {
+    public BookingResponse createBooking(
+        final BookingRequest request,
+        final String userId,
+        final String email,
+        final String username
+    ) {
         validateBookingRequest(request);
+        validateAuthenticatedUser(userId);
 
-        final Customer customer = customerRepository
-            .findById(request.getUserId())
-            .join();
-
-        log.info("Customer found: {}", customer);
+        log.info(
+            "Creating booking for userId={}, email={}, username={}",
+            userId,
+            email,
+            username
+        );
 
         final InventoryResponse inventoryResponse =
             inventoryServiceClient.getInventory(request.getEventId());
@@ -61,6 +63,7 @@ public class BookingService {
 
         final BookingEvent bookingEvent = createBookingEvent(
             request,
+            userId,
             inventoryResponse
         );
 
@@ -78,10 +81,11 @@ public class BookingService {
 
     private BookingEvent createBookingEvent(
         final BookingRequest request,
+        final String userId,
         final InventoryResponse inventoryResponse
     ) {
         return BookingEvent.builder()
-            .userId(request.getUserId())
+            .userId(userId)
             .eventId(request.getEventId())
             .ticketCount(request.getTicketCount())
             .totalPrice(
@@ -97,12 +101,6 @@ public class BookingService {
             );
         }
 
-        if (request.getUserId() == null || request.getUserId().isBlank()) {
-            throw new IllegalArgumentException(
-                "El id del cliente es obligatorio"
-            );
-        }
-
         if (request.getEventId() == null) {
             throw new IllegalArgumentException(
                 "El id del evento es obligatorio"
@@ -112,6 +110,14 @@ public class BookingService {
         if (request.getTicketCount() == null || request.getTicketCount() <= 0) {
             throw new IllegalArgumentException(
                 "La cantidad de tickets debe ser mayor a cero"
+            );
+        }
+    }
+
+    private void validateAuthenticatedUser(final String userId) {
+        if (userId == null || userId.isBlank()) {
+            throw new IllegalArgumentException(
+                "No se encontró un usuario autenticado"
             );
         }
     }

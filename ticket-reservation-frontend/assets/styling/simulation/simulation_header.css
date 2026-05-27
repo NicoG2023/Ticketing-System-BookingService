@@ -1,0 +1,42 @@
+.simulation-hero {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 2rem;
+    border: 1px solid rgba(226, 232, 240, 0.9);
+    border-radius: 28px;
+    background: rgba(255, 255, 255, 0.78);
+    box-shadow: 0 18px 50px rgba(15, 23, 42, 0.08);
+    backdrop-filter: blur(12px);
+}
+
+.simulation-hero__eyebrow {
+    margin: 0 0 0.5rem;
+    color: #dc2626;
+    font-size: 0.78rem;
+    font-weight: 900;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.simulation-hero h1 {
+    margin: 0;
+    color: #0f172a;
+    font-size: clamp(2rem, 4vw, 3.2rem);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+}
+
+.simulation-hero__description {
+    max-width: 760px;
+    margin: 0.9rem 0 0;
+    color: #64748b;
+    font-size: 1rem;
+    line-height: 1.7;
+}
+
+@media (max-width: 720px) {
+    .simulation-hero {
+        padding: 1.4rem;
+        border-radius: 22px;
+    }
+}
