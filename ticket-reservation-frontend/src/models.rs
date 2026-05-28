@@ -64,14 +64,26 @@ pub struct CreateVenueRequest {
 #[serde(rename_all = "camelCase")]
 pub struct LostUpdateSimulationResponse {
     pub event_id: u64,
+
     pub initial_capacity: u64,
-    pub request_a_calculated_capacity: u64,
-    pub request_b_calculated_capacity: u64,
-    pub final_capacity: u64,
+
+    pub request_a_read_capacity: Option<u64>,
+    pub request_a_calculated_capacity: Option<u64>,
+
+    pub request_b_read_capacity: Option<u64>,
+    pub request_b_calculated_capacity: Option<u64>,
+
+    pub final_capacity: Option<u64>,
     pub expected_capacity: u64,
+
+    pub request_a_committed: bool,
+    pub request_b_committed: bool,
+
     pub lost_update_occurred: bool,
+
     pub request_a_status: String,
     pub request_b_status: String,
+
     pub explanation: String,
     pub control: String,
 }

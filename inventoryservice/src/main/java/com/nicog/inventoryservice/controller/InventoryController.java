@@ -67,11 +67,62 @@ public class InventoryController {
         return ResponseEntity.ok().build();
     }
 
-    @GetMapping("/events/{eventId}/simulations/lost-update")
-    public ResponseEntity<LostUpdateSimulationResponse> simulateLostUpdate(
-        @PathVariable Long eventId
+    @PostMapping("/events/{eventId}/simulations/lost-update/start")
+    public ResponseEntity<
+        LostUpdateSimulationResponse
+    > startLostUpdateSimulation(@PathVariable Long eventId) {
+        return ResponseEntity.ok(
+            inventoryService.startLostUpdateSimulation(eventId)
+        );
+    }
+
+    @PostMapping(
+        "/events/{eventId}/simulations/lost-update/sessions/{session}/read"
+    )
+    public ResponseEntity<LostUpdateSimulationResponse> readLostUpdateCapacity(
+        @PathVariable Long eventId,
+        @PathVariable String session
     ) {
-        return ResponseEntity.ok(inventoryService.simulateLostUpdate(eventId));
+        return ResponseEntity.ok(
+            inventoryService.readLostUpdateCapacity(eventId, session)
+        );
+    }
+
+    @PostMapping(
+        "/events/{eventId}/simulations/lost-update/sessions/{session}/calculate"
+    )
+    public ResponseEntity<
+        LostUpdateSimulationResponse
+    > calculateLostUpdateCapacity(
+        @PathVariable Long eventId,
+        @PathVariable String session
+    ) {
+        return ResponseEntity.ok(
+            inventoryService.calculateLostUpdateCapacity(eventId, session)
+        );
+    }
+
+    @PostMapping(
+        "/events/{eventId}/simulations/lost-update/sessions/{session}/commit"
+    )
+    public ResponseEntity<
+        LostUpdateSimulationResponse
+    > commitLostUpdateCapacity(
+        @PathVariable Long eventId,
+        @PathVariable String session
+    ) {
+        return ResponseEntity.ok(
+            inventoryService.commitLostUpdateCapacity(eventId, session)
+        );
+    }
+
+    @PostMapping("/events/{eventId}/simulations/lost-update/restore")
+    public ResponseEntity<
+        LostUpdateSimulationResponse
+    > restoreLostUpdateSimulation(@PathVariable Long eventId) {
+        return ResponseEntity.ok(
+            inventoryService.restoreLostUpdateSimulation(eventId)
+        );
     }
 
     @PostMapping(

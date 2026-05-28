@@ -1,33 +1,27 @@
-package com.nicog.inventoryservice.response;
+package com.nicog.inventoryservice.simulation;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
-public class LostUpdateSimulationResponse {
+@NoArgsConstructor
+@AllArgsConstructor
+public class LostUpdateSimulationState {
 
     private Long eventId;
-
     private Long initialCapacity;
 
     private Long requestAReadCapacity;
     private Long requestACalculatedCapacity;
+    private Boolean requestACommitted;
 
     private Long requestBReadCapacity;
     private Long requestBCalculatedCapacity;
-
-    private Long finalCapacity;
-    private Long expectedCapacity;
-
-    private Boolean requestACommitted;
     private Boolean requestBCommitted;
-
-    private Boolean lostUpdateOccurred;
 
     private String requestAStatus;
     private String requestBStatus;
-
-    private String explanation;
-    private String control;
 }

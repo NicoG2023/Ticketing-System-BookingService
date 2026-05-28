@@ -9,15 +9,21 @@ import com.nicog.inventoryservice.request.UpdateVenueRequest;
 import com.nicog.inventoryservice.response.EventInventoryResponse;
 import com.nicog.inventoryservice.response.LostUpdateSimulationResponse;
 import com.nicog.inventoryservice.response.VenueInventoryResponse;
+import com.nicog.inventoryservice.simulation.LostUpdateSimulationState;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 @Service
 @Slf4j
 public class InventoryService {
+
+    private static final Long TICKETS_TO_BOOK = 1L;
+    private final Map<Long, LostUpdateSimulationState> lostUpdateStates =
+        new ConcurrentHashMap<>();
 
     private final FirebaseInventoryRepository firebaseInventoryRepository;
 
@@ -197,126 +203,6 @@ public class InventoryService {
 
             throw new RuntimeException(
                 "No fue posible liberar la capacidad del evento"
-            );
-        }
-    }
-
-    public LostUpdateSimulationResponse simulateLostUpdate(final Long eventId) {
-        final Long ticketsToBook = 1L;
-
-        try {
-            Event eventBefore = firebaseInventoryRepository
-                .findEventById(eventId)
-                .join();
-
-            Long initialCapacity = eventBefore.getLeftCapacity();
-
-            if (initialCapacity == null) {
-                throw new RuntimeException(
-                    "El evento no tiene capacidad disponible registrada"
-                );
-            }
-
-            CompletableFuture<String> requestA = CompletableFuture.supplyAsync(
-                () -> {
-                    try {
-                        Event eventReadByA = firebaseInventoryRepository
-                            .findEventById(eventId)
-                            .join();
-
-                        Long capacityReadByA = eventReadByA.getLeftCapacity();
-
-                        Thread.sleep(1000);
-
-                        Long newCapacityA = capacityReadByA - ticketsToBook;
-
-                        firebaseInventoryRepository
-                            .unsafeSetLeftCapacity(eventId, newCapacityA)
-                            .join();
-
-                        return (
-                            "SUCCESS: A leyó " +
-                            capacityReadByA +
-                            " y guardó " +
-                            newCapacityA
-                        );
-                    } catch (Exception exception) {
-                        return "FAILED: " + exception.getMessage();
-                    }
-                }
-            );
-
-            CompletableFuture<String> requestB = CompletableFuture.supplyAsync(
-                () -> {
-                    try {
-                        Event eventReadByB = firebaseInventoryRepository
-                            .findEventById(eventId)
-                            .join();
-
-                        Long capacityReadByB = eventReadByB.getLeftCapacity();
-
-                        Thread.sleep(1000);
-
-                        Long newCapacityB = capacityReadByB - ticketsToBook;
-
-                        firebaseInventoryRepository
-                            .unsafeSetLeftCapacity(eventId, newCapacityB)
-                            .join();
-
-                        return (
-                            "SUCCESS: B leyó " +
-                            capacityReadByB +
-                            " y guardó " +
-                            newCapacityB
-                        );
-                    } catch (Exception exception) {
-                        return "FAILED: " + exception.getMessage();
-                    }
-                }
-            );
-
-            CompletableFuture.allOf(requestA, requestB).join();
-
-            Event eventAfter = firebaseInventoryRepository
-                .findEventById(eventId)
-                .join();
-
-            Long finalCapacity = eventAfter.getLeftCapacity();
-
-            firebaseInventoryRepository
-                .unsafeSetLeftCapacity(eventId, finalCapacity)
-                .join();
-
-            Long expectedCapacity = initialCapacity - 2;
-
-            boolean lostUpdateOccurred = !expectedCapacity.equals(
-                finalCapacity
-            );
-
-            return LostUpdateSimulationResponse.builder()
-                .eventId(eventId)
-                .initialCapacity(initialCapacity)
-                .requestACalculatedCapacity(initialCapacity - ticketsToBook)
-                .requestBCalculatedCapacity(initialCapacity - ticketsToBook)
-                .finalCapacity(finalCapacity)
-                .expectedCapacity(expectedCapacity)
-                .lostUpdateOccurred(lostUpdateOccurred)
-                .requestAStatus(requestA.join())
-                .requestBStatus(requestB.join())
-                .explanation(
-                    "Dos reservas concurrentes leyeron la misma capacidad inicial. " +
-                        "Ambas calcularon la nueva capacidad usando ese mismo valor y luego escribieron el resultado. " +
-                        "Como no se usó transacción, una actualización sobrescribió a la otra."
-                )
-                .control(
-                    "El problema se controla usando transacciones en Firebase, como en decreaseEventCapacity, " +
-                        "donde la lectura y escritura se ejecutan como una operación atómica."
-                )
-                .build();
-        } catch (Exception exception) {
-            throw new RuntimeException(
-                "No fue posible simular Lost Update",
-                exception
             );
         }
     }
@@ -619,6 +505,293 @@ public class InventoryService {
             log.error("Error actualizando sede con id: {}", venueId, exception);
             throw new RuntimeException("No fue posible actualizar la sede");
         }
+    }
+
+    public LostUpdateSimulationResponse startLostUpdateSimulation(
+        final Long eventId
+    ) {
+        try {
+            Event event = firebaseInventoryRepository
+                .findEventById(eventId)
+                .join();
+
+            Long initialCapacity = event.getLeftCapacity();
+
+            if (initialCapacity == null) {
+                throw new RuntimeException(
+                    "El evento no tiene capacidad disponible registrada"
+                );
+            }
+
+            LostUpdateSimulationState state =
+                LostUpdateSimulationState.builder()
+                    .eventId(eventId)
+                    .initialCapacity(initialCapacity)
+                    .requestACommitted(false)
+                    .requestBCommitted(false)
+                    .requestAStatus("Pendiente")
+                    .requestBStatus("Pendiente")
+                    .build();
+
+            lostUpdateStates.put(eventId, state);
+
+            return buildLostUpdateResponse(state);
+        } catch (Exception exception) {
+            throw new RuntimeException(
+                "No fue posible iniciar la simulación de Lost Update",
+                exception
+            );
+        }
+    }
+
+    public LostUpdateSimulationResponse readLostUpdateCapacity(
+        final Long eventId,
+        final String session
+    ) {
+        LostUpdateSimulationState state = getLostUpdateState(eventId);
+
+        try {
+            Event event = firebaseInventoryRepository
+                .findEventById(eventId)
+                .join();
+
+            Long capacityRead = event.getLeftCapacity();
+
+            if (capacityRead == null) {
+                throw new RuntimeException(
+                    "El evento no tiene capacidad disponible registrada"
+                );
+            }
+
+            if (isSessionA(session)) {
+                state.setRequestAReadCapacity(capacityRead);
+                state.setRequestAStatus("A leyó capacidad: " + capacityRead);
+            } else if (isSessionB(session)) {
+                state.setRequestBReadCapacity(capacityRead);
+                state.setRequestBStatus("B leyó capacidad: " + capacityRead);
+            } else {
+                throw new IllegalArgumentException(
+                    "Sesión inválida: " + session
+                );
+            }
+
+            return buildLostUpdateResponse(state);
+        } catch (Exception exception) {
+            throw new RuntimeException(
+                "No fue posible leer la capacidad en la simulación",
+                exception
+            );
+        }
+    }
+
+    public LostUpdateSimulationResponse calculateLostUpdateCapacity(
+        final Long eventId,
+        final String session
+    ) {
+        LostUpdateSimulationState state = getLostUpdateState(eventId);
+
+        if (isSessionA(session)) {
+            if (state.getRequestAReadCapacity() == null) {
+                throw new IllegalStateException(
+                    "La sesión A debe leer la capacidad antes de calcular"
+                );
+            }
+
+            Long calculatedCapacity =
+                state.getRequestAReadCapacity() - TICKETS_TO_BOOK;
+
+            state.setRequestACalculatedCapacity(calculatedCapacity);
+            state.setRequestAStatus(
+                "A calculó nueva capacidad: " + calculatedCapacity
+            );
+        } else if (isSessionB(session)) {
+            if (state.getRequestBReadCapacity() == null) {
+                throw new IllegalStateException(
+                    "La sesión B debe leer la capacidad antes de calcular"
+                );
+            }
+
+            Long calculatedCapacity =
+                state.getRequestBReadCapacity() - TICKETS_TO_BOOK;
+
+            state.setRequestBCalculatedCapacity(calculatedCapacity);
+            state.setRequestBStatus(
+                "B calculó nueva capacidad: " + calculatedCapacity
+            );
+        } else {
+            throw new IllegalArgumentException("Sesión inválida: " + session);
+        }
+
+        return buildLostUpdateResponse(state);
+    }
+
+    public LostUpdateSimulationResponse commitLostUpdateCapacity(
+        final Long eventId,
+        final String session
+    ) {
+        LostUpdateSimulationState state = getLostUpdateState(eventId);
+
+        try {
+            if (isSessionA(session)) {
+                if (state.getRequestACalculatedCapacity() == null) {
+                    throw new IllegalStateException(
+                        "La sesión A debe calcular antes de guardar"
+                    );
+                }
+
+                firebaseInventoryRepository
+                    .unsafeSetLeftCapacity(
+                        eventId,
+                        state.getRequestACalculatedCapacity()
+                    )
+                    .join();
+
+                state.setRequestACommitted(true);
+                state.setRequestAStatus(
+                    "A guardó capacidad: " +
+                        state.getRequestACalculatedCapacity()
+                );
+            } else if (isSessionB(session)) {
+                if (state.getRequestBCalculatedCapacity() == null) {
+                    throw new IllegalStateException(
+                        "La sesión B debe calcular antes de guardar"
+                    );
+                }
+
+                firebaseInventoryRepository
+                    .unsafeSetLeftCapacity(
+                        eventId,
+                        state.getRequestBCalculatedCapacity()
+                    )
+                    .join();
+
+                state.setRequestBCommitted(true);
+                state.setRequestBStatus(
+                    "B guardó capacidad: " +
+                        state.getRequestBCalculatedCapacity()
+                );
+            } else {
+                throw new IllegalArgumentException(
+                    "Sesión inválida: " + session
+                );
+            }
+
+            return buildLostUpdateResponse(state);
+        } catch (Exception exception) {
+            throw new RuntimeException(
+                "No fue posible guardar la capacidad en la simulación",
+                exception
+            );
+        }
+    }
+
+    public LostUpdateSimulationResponse restoreLostUpdateSimulation(
+        final Long eventId
+    ) {
+        LostUpdateSimulationState state = getLostUpdateState(eventId);
+
+        try {
+            firebaseInventoryRepository
+                .unsafeSetLeftCapacity(eventId, state.getInitialCapacity())
+                .join();
+
+            LostUpdateSimulationState restoredState =
+                LostUpdateSimulationState.builder()
+                    .eventId(eventId)
+                    .initialCapacity(state.getInitialCapacity())
+                    .requestACommitted(false)
+                    .requestBCommitted(false)
+                    .requestAStatus("Pendiente")
+                    .requestBStatus("Pendiente")
+                    .build();
+
+            lostUpdateStates.put(eventId, restoredState);
+
+            return buildLostUpdateResponse(restoredState);
+        } catch (Exception exception) {
+            throw new RuntimeException(
+                "No fue posible restaurar la simulación",
+                exception
+            );
+        }
+    }
+
+    private LostUpdateSimulationState getLostUpdateState(final Long eventId) {
+        LostUpdateSimulationState state = lostUpdateStates.get(eventId);
+
+        if (state == null) {
+            throw new IllegalStateException(
+                "Primero debes iniciar la simulación para el evento: " + eventId
+            );
+        }
+
+        return state;
+    }
+
+    private boolean isSessionA(final String session) {
+        return "A".equalsIgnoreCase(session);
+    }
+
+    private boolean isSessionB(final String session) {
+        return "B".equalsIgnoreCase(session);
+    }
+
+    private LostUpdateSimulationResponse buildLostUpdateResponse(
+        final LostUpdateSimulationState state
+    ) {
+        Long finalCapacity = null;
+
+        try {
+            Event event = firebaseInventoryRepository
+                .findEventById(state.getEventId())
+                .join();
+
+            finalCapacity = event.getLeftCapacity();
+        } catch (Exception exception) {
+            log.warn(
+                "No fue posible consultar capacidad final para simulación Lost Update. eventId={}",
+                state.getEventId(),
+                exception
+            );
+        }
+
+        Long expectedCapacity = state.getInitialCapacity() - 2;
+
+        boolean bothRequestsCommitted =
+            Boolean.TRUE.equals(state.getRequestACommitted()) &&
+            Boolean.TRUE.equals(state.getRequestBCommitted());
+
+        boolean lostUpdateOccurred =
+            bothRequestsCommitted &&
+            finalCapacity != null &&
+            !expectedCapacity.equals(finalCapacity);
+
+        return LostUpdateSimulationResponse.builder()
+            .eventId(state.getEventId())
+            .initialCapacity(state.getInitialCapacity())
+            .requestAReadCapacity(state.getRequestAReadCapacity())
+            .requestACalculatedCapacity(state.getRequestACalculatedCapacity())
+            .requestBReadCapacity(state.getRequestBReadCapacity())
+            .requestBCalculatedCapacity(state.getRequestBCalculatedCapacity())
+            .requestACommitted(state.getRequestACommitted())
+            .requestBCommitted(state.getRequestBCommitted())
+            .finalCapacity(finalCapacity)
+            .expectedCapacity(expectedCapacity)
+            .lostUpdateOccurred(lostUpdateOccurred)
+            .requestAStatus(state.getRequestAStatus())
+            .requestBStatus(state.getRequestBStatus())
+            .explanation(
+                "El Lost Update ocurre cuando dos reservas leen la misma capacidad " +
+                    "antes de que alguna guarde el cambio. Cada una calcula una nueva " +
+                    "capacidad con base en el valor viejo, y al guardar, una escritura " +
+                    "sobrescribe a la otra."
+            )
+            .control(
+                "Este problema se controla usando una transacción. En este proyecto, " +
+                    "el método decreaseEventCapacity usa runTransaction para que lectura " +
+                    "y escritura ocurran como una operación atómica."
+            )
+            .build();
     }
 
     private void validateUpdateVenueRequest(final UpdateVenueRequest request) {

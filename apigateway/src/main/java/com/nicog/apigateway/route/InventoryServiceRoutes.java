@@ -58,8 +58,32 @@ public class InventoryServiceRoutes {
 
             // Simulación
             .route(
-                RequestPredicates.GET(
-                    "/api/v1/events/{eventId}/simulations/lost-update"
+                RequestPredicates.POST(
+                    "/api/v1/events/{eventId}/simulations/lost-update/start"
+                ),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.POST(
+                    "/api/v1/events/{eventId}/simulations/lost-update/sessions/{session}/read"
+                ),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.POST(
+                    "/api/v1/events/{eventId}/simulations/lost-update/sessions/{session}/calculate"
+                ),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.POST(
+                    "/api/v1/events/{eventId}/simulations/lost-update/sessions/{session}/commit"
+                ),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.POST(
+                    "/api/v1/events/{eventId}/simulations/lost-update/restore"
                 ),
                 HandlerFunctions.http()
             )

@@ -8,6 +8,7 @@ RUN cargo install dioxus-cli --locked
 COPY Cargo.toml Cargo.lock ./
 COPY src src
 COPY assets assets
+COPY public public
 COPY Dioxus.toml Dioxus.toml
 
 RUN dx build --release --platform web

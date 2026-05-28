@@ -252,16 +252,33 @@ pub async fn delete_venue(venue_id: u64) -> Result<(), String> {
     Ok(())
 }
 
-pub async fn simulate_lost_update(event_id: u64) -> Result<LostUpdateSimulationResponse, String> {
+#[derive(Debug, Clone, Copy)]
+pub enum LostUpdateSession {
+    A,
+    B,
+}
+
+impl LostUpdateSession {
+    fn as_str(&self) -> &'static str {
+        match self {
+            LostUpdateSession::A => "A",
+            LostUpdateSession::B => "B",
+        }
+    }
+}
+
+pub async fn start_lost_update_simulation(
+    event_id: u64,
+) -> Result<LostUpdateSimulationResponse, String> {
     let token = bearer_token().await?;
 
-    let response = Request::get(&format!(
-        "{API_BASE}/events/{event_id}/simulations/lost-update"
+    let response = Request::post(&format!(
+        "{API_BASE}/events/{event_id}/simulations/lost-update/start"
     ))
     .header("Authorization", &token)
     .send()
     .await
-    .map_err(|error| format!("Error simulando Lost Update: {error}"))?;
+    .map_err(|error| format!("Error iniciando simulación Lost Update: {error}"))?;
 
     if !response.ok() {
         return Err(format!("Error del servidor: {}", response.status()));
@@ -271,4 +288,102 @@ pub async fn simulate_lost_update(event_id: u64) -> Result<LostUpdateSimulationR
         .json::<LostUpdateSimulationResponse>()
         .await
         .map_err(|error| format!("Error leyendo la simulación Lost Update: {error}"))
+}
+
+pub async fn read_lost_update_capacity(
+    event_id: u64,
+    session: LostUpdateSession,
+) -> Result<LostUpdateSimulationResponse, String> {
+    let token = bearer_token().await?;
+    let session = session.as_str();
+
+    let response = Request::post(&format!(
+        "{API_BASE}/events/{event_id}/simulations/lost-update/sessions/{session}/read"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error leyendo capacidad en simulación: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<LostUpdateSimulationResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la respuesta de simulación: {error}"))
+}
+
+pub async fn calculate_lost_update_capacity(
+    event_id: u64,
+    session: LostUpdateSession,
+) -> Result<LostUpdateSimulationResponse, String> {
+    let token = bearer_token().await?;
+    let session = session.as_str();
+
+    let response = Request::post(&format!(
+        "{API_BASE}/events/{event_id}/simulations/lost-update/sessions/{session}/calculate"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error calculando capacidad en simulación: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<LostUpdateSimulationResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la respuesta de simulación: {error}"))
+}
+
+pub async fn commit_lost_update_capacity(
+    event_id: u64,
+    session: LostUpdateSession,
+) -> Result<LostUpdateSimulationResponse, String> {
+    let token = bearer_token().await?;
+    let session = session.as_str();
+
+    let response = Request::post(&format!(
+        "{API_BASE}/events/{event_id}/simulations/lost-update/sessions/{session}/commit"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error guardando capacidad en simulación: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<LostUpdateSimulationResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la respuesta de simulación: {error}"))
+}
+
+pub async fn restore_lost_update_simulation(
+    event_id: u64,
+) -> Result<LostUpdateSimulationResponse, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::post(&format!(
+        "{API_BASE}/events/{event_id}/simulations/lost-update/restore"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error restaurando simulación Lost Update: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<LostUpdateSimulationResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la simulación restaurada: {error}"))
 }
