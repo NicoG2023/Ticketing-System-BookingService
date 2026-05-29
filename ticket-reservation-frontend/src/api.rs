@@ -3,8 +3,8 @@ use gloo_net::http::Request;
 use crate::auth;
 use crate::models::{
     BookingRequest, BookingResponse, CreateEventRequest, CreateVenueRequest,
-    EventInventoryResponse, LostUpdateSimulationResponse, UpdateVenueRequest,
-    VenueInventoryResponse,
+    DirtyReadSimulationResponse, EventInventoryResponse, LostUpdateSimulationResponse,
+    UpdateVenueRequest, VenueInventoryResponse,
 };
 
 const API_BASE: &str = "http://localhost:8091/api/v1";
@@ -386,4 +386,188 @@ pub async fn restore_lost_update_simulation(
         .json::<LostUpdateSimulationResponse>()
         .await
         .map_err(|error| format!("Error leyendo la simulación restaurada: {error}"))
+}
+
+pub async fn start_dirty_read_simulation(
+    event_id: u64,
+) -> Result<DirtyReadSimulationResponse, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::post(&format!(
+        "{API_BASE}/events/{event_id}/simulations/dirty-read/start"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error iniciando simulación Dirty Read: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<DirtyReadSimulationResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la simulación Dirty Read: {error}"))
+}
+
+pub async fn start_dirty_read_session_a(
+    event_id: u64,
+) -> Result<DirtyReadSimulationResponse, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::post(&format!(
+        "{API_BASE}/events/{event_id}/simulations/dirty-read/session-a/start"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error iniciando Sesión A en Dirty Read: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<DirtyReadSimulationResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la respuesta de Dirty Read: {error}"))
+}
+
+pub async fn write_dirty_read_uncommitted_capacity(
+    event_id: u64,
+) -> Result<DirtyReadSimulationResponse, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::post(&format!(
+        "{API_BASE}/events/{event_id}/simulations/dirty-read/session-a/uncommitted-write"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error escribiendo capacidad temporal en Dirty Read: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<DirtyReadSimulationResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la respuesta de Dirty Read: {error}"))
+}
+
+pub async fn read_dirty_read_uncommitted_capacity_by_session_b(
+    event_id: u64,
+) -> Result<DirtyReadSimulationResponse, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::post(&format!(
+        "{API_BASE}/events/{event_id}/simulations/dirty-read/session-b/read"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error leyendo valor no confirmado en Dirty Read: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<DirtyReadSimulationResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la respuesta de Dirty Read: {error}"))
+}
+
+pub async fn rollback_dirty_read_session_a(
+    event_id: u64,
+) -> Result<DirtyReadSimulationResponse, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::post(&format!(
+        "{API_BASE}/events/{event_id}/simulations/dirty-read/session-a/rollback"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error ejecutando rollback en Dirty Read: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<DirtyReadSimulationResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la respuesta de Dirty Read: {error}"))
+}
+
+pub async fn read_dirty_read_final_confirmed_capacity(
+    event_id: u64,
+) -> Result<DirtyReadSimulationResponse, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::post(&format!(
+        "{API_BASE}/events/{event_id}/simulations/dirty-read/final-read"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error leyendo capacidad final confirmada en Dirty Read: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<DirtyReadSimulationResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la respuesta de Dirty Read: {error}"))
+}
+
+pub async fn diagnose_dirty_read_simulation(
+    event_id: u64,
+) -> Result<DirtyReadSimulationResponse, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::post(&format!(
+        "{API_BASE}/events/{event_id}/simulations/dirty-read/diagnose"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error diagnosticando Dirty Read: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<DirtyReadSimulationResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo el diagnóstico Dirty Read: {error}"))
+}
+
+pub async fn reset_dirty_read_simulation(
+    event_id: u64,
+) -> Result<DirtyReadSimulationResponse, String> {
+    let token = bearer_token().await?;
+
+    let response = Request::post(&format!(
+        "{API_BASE}/events/{event_id}/simulations/dirty-read/reset"
+    ))
+    .header("Authorization", &token)
+    .send()
+    .await
+    .map_err(|error| format!("Error reiniciando simulación Dirty Read: {error}"))?;
+
+    if !response.ok() {
+        return Err(format!("Error del servidor: {}", response.status()));
+    }
+
+    response
+        .json::<DirtyReadSimulationResponse>()
+        .await
+        .map_err(|error| format!("Error leyendo la simulación reiniciada: {error}"))
 }

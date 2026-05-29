@@ -1,0 +1,169 @@
+.dirty-read-timeline {
+    padding: 1.1rem;
+    border: 1px solid #e2e8f0;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 1.35rem;
+    box-shadow: 0 22px 50px rgba(15, 23, 42, 0.075);
+    animation: dirtyReadPanelEnter 0.56s ease-out both;
+}
+
+.dirty-read-timeline__header {
+    margin-bottom: 1rem;
+}
+
+.dirty-read-timeline__header p {
+    margin: 0 0 0.25rem;
+    color: #dc2626;
+    font-size: 0.68rem;
+    font-weight: 950;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.dirty-read-timeline__header h3 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 1.05rem;
+    letter-spacing: -0.02em;
+}
+
+.dirty-read-timeline__items {
+    display: grid;
+    gap: 0.65rem;
+    position: relative;
+}
+
+.dirty-read-timeline__item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 0.82rem;
+    border-radius: 1rem;
+    border: 1px solid #e2e8f0;
+    background: linear-gradient(180deg, #ffffff, #f8fafc);
+    position: relative;
+    overflow: hidden;
+    transition:
+        background 0.22s ease,
+        border-color 0.22s ease,
+        transform 0.22s ease,
+        box-shadow 0.22s ease;
+}
+
+.dirty-read-timeline__item:hover {
+    transform: translateX(3px);
+    box-shadow: 0 12px 26px rgba(15, 23, 42, 0.06);
+}
+
+.dirty-read-timeline__item--active {
+    border-color: #fca5a5;
+    background: linear-gradient(135deg, #fef2f2, #ffffff);
+    transform: translateX(5px);
+    animation: dirtyReadTimelineActive 1.25s ease-in-out infinite;
+}
+
+.dirty-read-timeline__item--completed {
+    border-color: #bbf7d0;
+    background: linear-gradient(135deg, #f0fdf4, #ffffff);
+}
+
+.dirty-read-timeline__marker {
+    width: 2.05rem;
+    height: 2.05rem;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    background: #e2e8f0;
+    color: #334155;
+    font-size: 0.82rem;
+    font-weight: 950;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8);
+}
+
+.dirty-read-timeline__item--active .dirty-read-timeline__marker {
+    background: #dc2626;
+    color: #ffffff;
+    animation: dirtyReadMarkerPulse 1s ease-in-out infinite;
+}
+
+.dirty-read-timeline__item--completed .dirty-read-timeline__marker {
+    background: #16a34a;
+    color: #ffffff;
+}
+
+.dirty-read-timeline__content {
+    min-width: 0;
+}
+
+.dirty-read-timeline__item-top {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    align-items: center;
+}
+
+.dirty-read-timeline__item h4 {
+    margin: 0;
+    color: #0f172a;
+    font-size: 0.9rem;
+}
+
+.dirty-read-timeline__item span {
+    flex-shrink: 0;
+    padding: 0.25rem 0.55rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid #e2e8f0;
+    color: #64748b;
+    font-size: 0.66rem;
+    font-weight: 900;
+}
+
+.dirty-read-timeline__item p {
+    margin: 0.35rem 0 0;
+    color: #64748b;
+    line-height: 1.45;
+    font-size: 0.84rem;
+}
+
+@keyframes dirtyReadPanelEnter {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes dirtyReadTimelineActive {
+    0%,
+    100% {
+        box-shadow: 0 0 0 rgba(220, 38, 38, 0);
+    }
+
+    50% {
+        box-shadow: 0 16px 30px rgba(220, 38, 38, 0.12);
+    }
+}
+
+@keyframes dirtyReadMarkerPulse {
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.1);
+    }
+}
+
+@media (max-width: 640px) {
+    .dirty-read-timeline__item-top {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+}

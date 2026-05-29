@@ -3,6 +3,7 @@ package com.nicog.inventoryservice.controller;
 import com.nicog.inventoryservice.request.CreateEventRequest;
 import com.nicog.inventoryservice.request.CreateVenueRequest;
 import com.nicog.inventoryservice.request.UpdateVenueRequest;
+import com.nicog.inventoryservice.response.DirtyReadSimulationResponse;
 import com.nicog.inventoryservice.response.EventInventoryResponse;
 import com.nicog.inventoryservice.response.LostUpdateSimulationResponse;
 import com.nicog.inventoryservice.response.VenueInventoryResponse;
@@ -177,6 +178,80 @@ public class InventoryController {
     ) {
         return ResponseEntity.ok(
             inventoryService.updateVenue(venueId, request)
+        );
+    }
+
+    @PostMapping("/events/{eventId}/simulations/dirty-read/start")
+    public ResponseEntity<DirtyReadSimulationResponse> startDirtyReadSimulation(
+        @PathVariable Long eventId
+    ) {
+        return ResponseEntity.ok(
+            inventoryService.startDirtyReadSimulation(eventId)
+        );
+    }
+
+    @PostMapping("/events/{eventId}/simulations/dirty-read/session-a/start")
+    public ResponseEntity<DirtyReadSimulationResponse> startDirtyReadSessionA(
+        @PathVariable Long eventId
+    ) {
+        return ResponseEntity.ok(
+            inventoryService.startDirtyReadSessionA(eventId)
+        );
+    }
+
+    @PostMapping(
+        "/events/{eventId}/simulations/dirty-read/session-a/uncommitted-write"
+    )
+    public ResponseEntity<
+        DirtyReadSimulationResponse
+    > writeDirtyReadUncommittedCapacity(@PathVariable Long eventId) {
+        return ResponseEntity.ok(
+            inventoryService.writeDirtyReadUncommittedCapacity(eventId)
+        );
+    }
+
+    @PostMapping("/events/{eventId}/simulations/dirty-read/session-b/read")
+    public ResponseEntity<
+        DirtyReadSimulationResponse
+    > readDirtyReadUncommittedCapacityBySessionB(@PathVariable Long eventId) {
+        return ResponseEntity.ok(
+            inventoryService.readDirtyReadUncommittedCapacityBySessionB(eventId)
+        );
+    }
+
+    @PostMapping("/events/{eventId}/simulations/dirty-read/session-a/rollback")
+    public ResponseEntity<
+        DirtyReadSimulationResponse
+    > rollbackDirtyReadSessionA(@PathVariable Long eventId) {
+        return ResponseEntity.ok(
+            inventoryService.rollbackDirtyReadSessionA(eventId)
+        );
+    }
+
+    @PostMapping("/events/{eventId}/simulations/dirty-read/final-read")
+    public ResponseEntity<
+        DirtyReadSimulationResponse
+    > readDirtyReadFinalConfirmedCapacity(@PathVariable Long eventId) {
+        return ResponseEntity.ok(
+            inventoryService.readDirtyReadFinalConfirmedCapacity(eventId)
+        );
+    }
+
+    @PostMapping("/events/{eventId}/simulations/dirty-read/diagnose")
+    public ResponseEntity<
+        DirtyReadSimulationResponse
+    > diagnoseDirtyReadSimulation(@PathVariable Long eventId) {
+        return ResponseEntity.ok(
+            inventoryService.diagnoseDirtyReadSimulation(eventId)
+        );
+    }
+
+    @PostMapping("/events/{eventId}/simulations/dirty-read/reset")
+    public ResponseEntity<DirtyReadSimulationResponse> resetDirtyReadSimulation(
+        @PathVariable Long eventId
+    ) {
+        return ResponseEntity.ok(
+            inventoryService.resetDirtyReadSimulation(eventId)
         );
     }
 }

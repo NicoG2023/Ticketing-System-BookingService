@@ -87,3 +87,30 @@ pub struct LostUpdateSimulationResponse {
     pub explanation: String,
     pub control: String,
 }
+
+#[derive(Debug, Clone, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct DirtyReadSimulationResponse {
+    pub event_id: u64,
+    pub event_name: String,
+
+    pub current_step: String,
+
+    pub initial_confirmed_capacity: u64,
+    pub session_a_uncommitted_capacity: Option<u64>,
+    pub session_b_read_capacity: Option<u64>,
+    pub final_confirmed_capacity: Option<u64>,
+
+    pub session_a_started: bool,
+    pub session_a_has_uncommitted_write: bool,
+    pub session_b_has_read: bool,
+    pub rollback_executed: bool,
+    pub dirty_read_detected: bool,
+
+    pub session_a_status: String,
+    pub session_b_status: String,
+
+    pub diagnosis: String,
+    pub explanation: String,
+    pub control: String,
+}

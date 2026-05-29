@@ -26,7 +26,12 @@ pub fn Navbar() -> Element {
 
                 Link {
                     to: Route::Simulation {},
-                    "Simulaciones BD"
+                    "Simulación Lost Update"
+                }
+
+                Link {
+                    to: Route::DirtyReadPage {},
+                    "Simulación Dirty Read"
                 }
             }
 

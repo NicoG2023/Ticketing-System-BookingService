@@ -88,6 +88,56 @@ public class InventoryServiceRoutes {
                 HandlerFunctions.http()
             )
 
+            // Dirty Read
+            .route(
+                RequestPredicates.POST(
+                    "/api/v1/events/{eventId}/simulations/dirty-read/start"
+                ),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.POST(
+                    "/api/v1/events/{eventId}/simulations/dirty-read/session-a/start"
+                ),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.POST(
+                    "/api/v1/events/{eventId}/simulations/dirty-read/session-a/uncommitted-write"
+                ),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.POST(
+                    "/api/v1/events/{eventId}/simulations/dirty-read/session-b/read"
+                ),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.POST(
+                    "/api/v1/events/{eventId}/simulations/dirty-read/session-a/rollback"
+                ),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.POST(
+                    "/api/v1/events/{eventId}/simulations/dirty-read/final-read"
+                ),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.POST(
+                    "/api/v1/events/{eventId}/simulations/dirty-read/diagnose"
+                ),
+                HandlerFunctions.http()
+            )
+            .route(
+                RequestPredicates.POST(
+                    "/api/v1/events/{eventId}/simulations/dirty-read/reset"
+                ),
+                HandlerFunctions.http()
+            )
+
             // Sedes - lectura
             .route(
                 RequestPredicates.GET("/api/v1/inventory/venues"),
